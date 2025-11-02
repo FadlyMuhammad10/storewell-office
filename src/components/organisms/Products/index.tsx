@@ -53,7 +53,7 @@ export default function ProductsSection() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
           {PRODUCTS_DATA.map((product) => (
             <Link
-              href={`/product/${product.id}`}
+              href={`/products/${product.id}`}
               className="block"
               key={product.id}
             >

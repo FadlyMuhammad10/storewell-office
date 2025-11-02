@@ -32,12 +32,12 @@ export default function Navbar() {
             >
               Home
             </Link>
-            <a
-              href="#products"
+            <Link
+              href="/products"
               className="text-foreground hover:text-accent transition-colors font-bold text-lg uppercase tracking-wide"
             >
               Store
-            </a>
+            </Link>
             <a
               href="#"
               className="text-foreground hover:text-accent transition-colors font-bold text-lg uppercase tracking-wide"
