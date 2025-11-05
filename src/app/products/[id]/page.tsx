@@ -2,21 +2,91 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, Heart, Minus, Plus, Share2 } from "lucide-react";
+import { productType } from "@/types";
+import {
+  ArrowLeft,
+  Heart,
+  Minus,
+  Plus,
+  Share2,
+  ShoppingCart,
+} from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+import { Skeleton } from "@/components/ui/skeleton";
+import { formatPrice } from "@/lib/utils";
+import { GetProductDetail } from "@/services/participant";
 
-type paramsType = {
-  id: string;
-};
+export default function ProductDetailPage() {
+  const params = useParams();
+  const id = params.id as string;
+  const [product, setProduct] = useState<productType>();
+  const images = product?.images || [];
+  // cari index image yang isPrimary true
+  const primaryIndex = images.findIndex((img) => img.isPrimary === true);
+  // simpan index, bukan url
+  const [selectedImage, setSelectedImage] = useState(
+    primaryIndex !== -1 ? primaryIndex : 0
+  );
+  const [selectedVariants, setSelectedVariants] = useState({
+    variants: [],
+  });
 
-interface ProductDetailProps {
-  params: paramsType;
-}
+  const [quantity, setQuantity] = useState(1);
 
-export default function ProductDetailPage({ params }: ProductDetailProps) {
-  const [selectedImage, setSelectedImage] = useState(0);
+  const getProductDetail = useCallback(async () => {
+    const data = await GetProductDetail(id);
+
+    setProduct(data.data);
+  }, [id]);
+
+  useEffect(() => {
+    getProductDetail();
+  }, [getProductDetail]);
+
+  const handleSelectVariant = (variant, vv) => {
+    setSelectedVariants((prev) => {
+      const existing = prev.variants.find(
+        (v) => v.variantTypeId === variant.id
+      );
+
+      let updatedVariants;
+      if (existing) {
+        // Update varian yang sudah ada
+        updatedVariants = prev.variants.map((v) =>
+          v.variantTypeId === variant.id
+            ? {
+                variantTypeId: variant.id,
+                name: variant.name,
+                valueId: vv.id,
+                value: vv.value,
+              }
+            : v
+        );
+      } else {
+        // Tambahkan varian baru
+        updatedVariants = [
+          ...prev.variants,
+          {
+            variantTypeId: variant.id,
+            name: variant.name,
+            valueId: vv.id,
+            value: vv.value,
+          },
+        ];
+      }
+
+      return { ...prev, variants: updatedVariants };
+    });
+  };
+
+  const isSelected = (variantId, valueId) =>
+    selectedVariants.variants.some(
+      (v) => v.variantTypeId === variantId && v.valueId === valueId
+    );
+
   return (
     <div className="min-h-screen bg-background">
       {/* Breadcrumb */}
@@ -37,7 +107,7 @@ export default function ProductDetailPage({ params }: ProductDetailProps) {
           </Link>
           <span className="text-muted-foreground">/</span>
           <span className="text-primary font-bold uppercase">
-            {/* {product.category} */}
+            {product?.category?.name}
           </span>
         </div>
       </div>
@@ -58,19 +128,25 @@ export default function ProductDetailPage({ params }: ProductDetailProps) {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16">
           {/* Product Images */}
           <div className="space-y-4">
-            <div className="relative overflow-hidden rounded-xl border-2 border-primary/20">
-              <Image
-                width={600}
-                height={600}
-                src={"/images/urban-hoodie-streetwear.jpg"}
-                alt={"/images/urban-hoodie-streetwear.jpg"}
-                className="w-full h-[600px] object-cover"
-              />
-            </div>
+            {product ? (
+              <div className="relative overflow-hidden rounded-xl border-2 border-primary/20">
+                <Image
+                  width={600}
+                  height={600}
+                  src={
+                    images[selectedImage]?.image_url || "/placeholder.png" // fallback agar tidak empty string
+                  }
+                  alt={product.name || "Product image"}
+                  className="w-full h-[600px] rounded-xl object-cover"
+                />
+              </div>
+            ) : (
+              <Skeleton className="w-full h-[600px] object-cover" />
+            )}
 
             {/* Thumbnail Images */}
             <div className="grid grid-cols-4 gap-4">
-              {Array.from({ length: 4 }).map((_, index) => (
+              {images.map((image, index) => (
                 <button
                   key={index}
                   onClick={() => setSelectedImage(index)}
@@ -83,10 +159,8 @@ export default function ProductDetailPage({ params }: ProductDetailProps) {
                   <Image
                     width={200}
                     height={200}
-                    src={"/images/urban-hoodie-streetwear.jpg"}
-                    alt={`/images/urban-hoodie-streetwear.jpg view ${
-                      index + 1
-                    }`}
+                    src={image.image_url || "/placeholder.svg"}
+                    alt={`${product?.name} view ${index + 1}`}
                     className="w-full h-24 object-cover"
                   />
                 </button>
@@ -99,7 +173,7 @@ export default function ProductDetailPage({ params }: ProductDetailProps) {
             {/* Header */}
             <div>
               <h1 className="text-4xl lg:text-5xl font-black mb-4 text-balance uppercase tracking-tight">
-                {`hoodie`}
+                {product?.name}
               </h1>
               {/* <div className="flex items-center gap-4 mb-6">
                 <div className="flex items-center gap-2">
@@ -121,66 +195,45 @@ export default function ProductDetailPage({ params }: ProductDetailProps) {
 
             {/* Price */}
             <div className="flex items-center gap-4">
-              <span className="text-4xl font-black text-primary">${5000}</span>
-              <span className="text-xl text-muted-foreground line-through font-medium">
+              <span className="text-4xl font-black text-primary">
+                {formatPrice(product?.price || 0)}
+              </span>
+              {/* <span className="text-xl text-muted-foreground line-through font-medium">
                 ${5000}
               </span>
               <Badge variant="destructive" className="text-sm font-bold">
                 -{0}%
-              </Badge>
+              </Badge> */}
             </div>
 
             {/* Description */}
             <p className="text-lg text-muted-foreground leading-relaxed">
-              Lorem ipsum dolor sit amet consectetur adipisicing elit. Quod,
-              maiores impedit nostrum, porro in nesciunt minima ullam autem amet
-              architecto quam! Optio commodi deleniti error aut sit incidunt
-              iure facere.
+              {product?.description}
             </p>
 
-            {/* Color Selection */}
-            <div>
-              <h3 className="font-bold text-lg mb-4 uppercase tracking-wide">
-                COLOR
-              </h3>
-              <div className="flex gap-3">
-                {/* {product.colors.map((color) => (
-                  <button
-                    key={color}
-                    onClick={() => setSelectedColor(color)}
-                    className={`px-4 py-2 border-2 rounded-lg font-bold text-sm uppercase tracking-wide transition-all ${
-                      selectedColor === color
-                        ? "border-accent bg-accent text-accent-foreground"
-                        : "border-primary/20 hover:border-primary/40"
-                    }`}
-                  >
-                    {color}
-                  </button>
-                ))} */}
+            {product?.variants?.map((variant) => (
+              <div key={variant.id}>
+                <h3 className="font-bold text-lg mb-4 uppercase tracking-wide">
+                  {variant.name}
+                </h3>
+                <div className="flex gap-3">
+                  {variant?.values?.map((vv) => (
+                    <button
+                      type="button"
+                      key={vv.id}
+                      onClick={() => handleSelectVariant(variant, vv)}
+                      className={`px-4 py-2 border-2 rounded-lg font-bold text-sm uppercase tracking-wide transition-all ${
+                        isSelected(variant.id, vv.id)
+                          ? "border-accent bg-accent text-accent-foreground"
+                          : "border-primary/20 hover:border-primary/40"
+                      }`}
+                    >
+                      {vv.value}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
-
-            {/* Size Selection */}
-            <div>
-              <h3 className="font-bold text-lg mb-4 uppercase tracking-wide">
-                SIZE
-              </h3>
-              <div className="grid grid-cols-6 gap-3">
-                {/* {product.sizes.map((size) => (
-                  <button
-                    key={size}
-                    onClick={() => setSelectedSize(size)}
-                    className={`py-3 border-2 rounded-lg font-bold text-sm uppercase tracking-wide transition-all ${
-                      selectedSize === size
-                        ? "border-accent bg-accent text-accent-foreground"
-                        : "border-primary/20 hover:border-primary/40"
-                    }`}
-                  >
-                    {size}
-                  </button>
-                ))} */}
-              </div>
-            </div>
+            ))}
 
             {/* Quantity */}
             <div>
@@ -192,18 +245,18 @@ export default function ProductDetailPage({ params }: ProductDetailProps) {
                   <Button
                     variant="ghost"
                     size="icon"
-                    // onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
                     className="h-12 w-12"
                   >
                     <Minus className="h-4 w-4" />
                   </Button>
                   <span className="px-4 py-2 font-bold text-lg min-w-12 text-center">
-                    {5}
+                    {quantity}
                   </span>
                   <Button
                     variant="ghost"
                     size="icon"
-                    // onClick={() => setQuantity(quantity + 1)}
+                    onClick={() => setQuantity(quantity + 1)}
                     className="h-12 w-12"
                   >
                     <Plus className="h-4 w-4" />
@@ -217,25 +270,11 @@ export default function ProductDetailPage({ params }: ProductDetailProps) {
               <div className="flex gap-4">
                 <Button
                   size="lg"
-                  //   onClick={handleAddToCart}
-                  // disabled={!selectedSize || !selectedColor}
-                  //   className={`flex-1 h-14 text-lg font-bold uppercase tracking-wide transition-all ${
-                  //     isAddedToCart
-                  //       ? "bg-green-600 hover:bg-green-600"
-                  //       : "bg-accent hover:bg-accent/90"
-                  //   }`}
+                  className="flex-1 h-14 text-lg font-bold uppercase tracking-wide bg-accent hover:bg-accent/90"
+                  // onClick={handleToClick}
                 >
-                  {/* {isAddedToCart ? (
-                    <>
-                      <Check className="h-5 w-5 mr-2" />
-                      ADDED TO CART
-                    </>
-                  ) : (
-                    <>
-                      <ShoppingCart className="h-5 w-5 mr-2" />
-                      ADD TO CART
-                    </>
-                  )} */}
+                  <ShoppingCart className="h-5 w-5 mr-2" />
+                  ADD TO CART
                 </Button>
                 <Button
                   variant="outline"
@@ -273,21 +312,21 @@ export default function ProductDetailPage({ params }: ProductDetailProps) {
             </div>
 
             {/* Features */}
-            <Card className="border-2 border-primary/20">
+            {/* <Card className="border-2 border-primary/20">
               <CardContent className="p-6">
                 <h3 className="font-bold text-lg mb-4 uppercase tracking-wide">
                   FEATURES
                 </h3>
                 <ul className="space-y-2">
-                  {/* {product.features.map((feature, index) => (
+                  {product.features.map((feature, index) => (
                     <li key={index} className="flex items-center gap-3">
                       <div className="w-2 h-2 bg-accent rounded-full" />
                       <span className="font-medium">{feature}</span>
                     </li>
-                  ))} */}
+                  ))}
                 </ul>
               </CardContent>
-            </Card>
+            </Card> */}
           </div>
         </div>
 

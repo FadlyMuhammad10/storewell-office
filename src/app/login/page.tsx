@@ -3,13 +3,54 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { signinSchema } from "@/lib/schema";
+import { setCredentials } from "@/redux/slices/authSlice";
+import { postLogin } from "@/services/auth";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, Eye, EyeOff, Lock, User } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { useDispatch } from "react-redux";
+import z from "zod";
 
 export default function LoginPage() {
+  const dispatch = useDispatch();
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const form = useForm({
+    resolver: zodResolver(signinSchema),
+    values: {
+      email: "",
+      password: "",
+    },
+  });
+
+  const formSubmit = async (data: z.infer<typeof signinSchema>) => {
+    setLoading(true);
+    try {
+      const res = await postLogin(data);
+
+      dispatch(
+        setCredentials({
+          token: res.data.token,
+          refreshToken: res.data.refreshToken,
+          user: {
+            name: res.data.name,
+            email: res.data.email,
+          },
+        })
+      );
+
+      setLoading(false);
+      router.push("/");
+    } catch (error) {
+      console.log("error", error);
+    }
+  };
   return (
     <section className="container mx-auto px-4 py-8">
       <div className="max-w-md mx-auto">
@@ -35,7 +76,7 @@ export default function LoginPage() {
             </p>
           </div>
 
-          <form className="space-y-6">
+          <form className="space-y-6" onSubmit={form.handleSubmit(formSubmit)}>
             <div className="space-y-2">
               <Label
                 htmlFor="email"
@@ -45,11 +86,11 @@ export default function LoginPage() {
               </Label>
               <Input
                 id="email"
-                name="email"
                 type="email"
                 placeholder="Enter your email"
                 className="border-2 border-border focus:border-primary"
                 required
+                {...form.register("email")}
               />
             </div>
 
@@ -63,11 +104,11 @@ export default function LoginPage() {
               <div className="relative">
                 <Input
                   id="password"
-                  name="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="Enter your password"
                   className="border-2 border-border focus:border-primary pr-10"
                   required
+                  {...form.register("password")}
                 />
                 <Button
                   type="button"

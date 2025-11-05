@@ -8,12 +8,26 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { logOut } from "@/redux/slices/authSlice";
+import { RootState } from "@/redux/store";
+import { postLogout } from "@/services/auth";
 import { LogOut, Menu, ShoppingBag, User } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 
 export default function Navbar() {
-  const [login, setLogin] = useState(false);
+  const dispatch = useDispatch();
+  const login = useSelector((state: RootState) => state.auth.isLogin);
+  const user = useSelector((state: RootState) => state.auth.user);
+  const refreshToken = useSelector(
+    (state: RootState) => state.auth.refreshToken
+  );
+
+  const handleLogout = async () => {
+    dispatch(logOut());
+    await postLogout(refreshToken!);
+  };
+
   return (
     <header className="sticky top-0 z-50 w-full border-b-2 border-primary bg-background shadow-lg">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -67,9 +81,9 @@ export default function Navbar() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
                   <div className="px-2 py-1.5">
-                    <p className="text-sm font-medium">user</p>
+                    <p className="text-sm font-medium">{user?.name}</p>
                     <p className="text-xs text-muted-foreground">
-                      user@email.com
+                      {user?.email}
                     </p>
                   </div>
                   <DropdownMenuSeparator />
@@ -77,7 +91,10 @@ export default function Navbar() {
                   <DropdownMenuItem>Orders</DropdownMenuItem>
                   <DropdownMenuItem>Settings</DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem className="text-destructive">
+                  <DropdownMenuItem
+                    className="text-destructive"
+                    onClick={handleLogout}
+                  >
                     <LogOut className="h-4 w-4 mr-2" />
                     Sign Out
                   </DropdownMenuItem>

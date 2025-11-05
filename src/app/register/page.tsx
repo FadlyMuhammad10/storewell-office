@@ -3,14 +3,48 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { signupSchema } from "@/lib/schema";
+import { postRegister } from "@/services/auth";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, Eye, EyeOff, UserPlus } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import z from "zod";
 
 export default function RegisterPage() {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const form = useForm({
+    resolver: zodResolver(signupSchema),
+    values: {
+      firstName: "",
+      lastName: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+    },
+  });
+
+  const formSubmit = async (payload: z.infer<typeof signupSchema>) => {
+    setLoading(true);
+    if (payload.password !== payload.confirmPassword) {
+      setLoading(false);
+      return;
+    }
+    try {
+      await postRegister(payload);
+      setLoading(false);
+      router.push("/login");
+    } catch (error) {
+      console.log("error", error);
+      setLoading(false);
+    }
+  };
   return (
     <section className="container mx-auto px-4 py-8">
       <div className="max-w-md mx-auto">
@@ -36,7 +70,7 @@ export default function RegisterPage() {
             </p>
           </div>
 
-          <form className="space-y-6">
+          <form className="space-y-6" onSubmit={form.handleSubmit(formSubmit)}>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label
@@ -47,11 +81,11 @@ export default function RegisterPage() {
                 </Label>
                 <Input
                   id="firstName"
-                  name="firstName"
                   type="text"
                   placeholder="First name"
                   className="border-2 border-border focus:border-primary"
                   required
+                  {...form.register("firstName")}
                 />
               </div>
               <div className="space-y-2">
@@ -63,11 +97,11 @@ export default function RegisterPage() {
                 </Label>
                 <Input
                   id="lastName"
-                  name="lastName"
                   type="text"
                   placeholder="Last name"
                   className="border-2 border-border focus:border-primary"
                   required
+                  {...form.register("lastName")}
                 />
               </div>
             </div>
@@ -81,11 +115,11 @@ export default function RegisterPage() {
               </Label>
               <Input
                 id="email"
-                name="email"
                 type="email"
                 placeholder="Enter your email"
                 className="border-2 border-border focus:border-primary"
                 required
+                {...form.register("email")}
               />
             </div>
 
@@ -99,11 +133,11 @@ export default function RegisterPage() {
               <div className="relative">
                 <Input
                   id="password"
-                  name="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="Create a password"
                   className="border-2 border-border focus:border-primary pr-10"
                   required
+                  {...form.register("password")}
                 />
                 <Button
                   type="button"
@@ -131,11 +165,11 @@ export default function RegisterPage() {
               <div className="relative">
                 <Input
                   id="confirmPassword"
-                  name="confirmPassword"
                   type={showConfirmPassword ? "text" : "password"}
                   placeholder="Confirm your password"
                   className="border-2 border-border focus:border-primary pr-10"
                   required
+                  {...form.register("confirmPassword")}
                 />
                 <Button
                   type="button"

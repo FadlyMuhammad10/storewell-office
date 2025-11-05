@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
 import Footer from "@/components/layouts/Footer";
+import ReduxProvider from "./providers/ReduxProvider";
 
 const poppins = Poppins({
   weight: ["400", "500", "600", "700", "800", "900"],
@@ -23,9 +24,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${poppins.className} relative overflow-x-hidden`}>
-        <Navbar />
-        <main>{children}</main>
-        <Footer />
+        <ReduxProvider>
+          <Navbar />
+          <main>{children}</main>
+          <Footer />
+        </ReduxProvider>
       </body>
     </html>
   );
