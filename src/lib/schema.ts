@@ -20,3 +20,9 @@ export const checkoutSchema = z.object({
   postal_code: z.string().min(1, "Destination postal code is required"),
   address: z.string().min(1, "Address is required"),
 });
+
+export const addCartSchema = z.object({
+  product_id: z.number().positive(),
+  quantity: z.number().positive(),
+  variant_value_ids: z.array(z.number()).optional(),
+});

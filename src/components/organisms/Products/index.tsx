@@ -1,6 +1,7 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { formatPrice } from "@/lib/utils";
 import { GetProducts } from "@/services/participant";
 import { productType } from "@/types";
 import { Heart, ShoppingCart } from "lucide-react";
@@ -111,7 +112,7 @@ export default function ProductsSection() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <span className="font-black text-xl text-primary">
-                        ${product.price}
+                        {formatPrice(product.price!)}
                       </span>
                       {/* <span className="text-sm text-muted-foreground line-through font-medium">
                         ${product.price}

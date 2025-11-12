@@ -18,6 +18,7 @@ import { useDispatch, useSelector } from "react-redux";
 export default function Navbar() {
   const dispatch = useDispatch();
   const login = useSelector((state: RootState) => state.auth.isLogin);
+  const cartCount = useSelector((state: RootState) => state.cart.count);
   const user = useSelector((state: RootState) => state.auth.user);
   const refreshToken = useSelector(
     (state: RootState) => state.auth.refreshToken
@@ -120,7 +121,7 @@ export default function Navbar() {
               >
                 <ShoppingBag className="h-6 w-6" />
                 <Badge className="absolute -top-2 -right-2 h-6 w-6 flex items-center justify-center p-0 text-xs bg-accent font-bold">
-                  {login ? 1 : 0}
+                  {login ? cartCount : 0}
                 </Badge>
               </Button>
             </Link>

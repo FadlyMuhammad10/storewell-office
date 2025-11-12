@@ -11,10 +11,21 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { formatPrice } from "@/lib/utils";
+import { RootState } from "@/redux/store";
 import { useState } from "react";
+import { useSelector } from "react-redux";
 
 export default function CheckoutPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const itemsCheckout = useSelector((state: RootState) => state.checkout.items);
+
+  const subtotalPrice = itemsCheckout.reduce(
+    (total, item) => total + item.product.price! * item.quantity,
+    0
+  );
+
+  const totalPrice = subtotalPrice;
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -138,15 +149,37 @@ export default function CheckoutPage() {
             Ringkasan Pesanan
           </h2>
 
+          <div className="mb-6 pb-4 border-b border-border">
+            <h3 className="text-sm font-semibold text-muted-foreground mb-3">
+              Item Terpilih ({itemsCheckout.length})
+            </h3>
+            <div className="space-y-2">
+              {itemsCheckout.length > 0 ? (
+                itemsCheckout.map((item, i) => (
+                  <div key={i} className="flex justify-between text-sm">
+                    <span className="text-foreground">{item.product.name}</span>
+                    <span className="text-muted-foreground">
+                      {item.quantity}x
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground italic">
+                  Tidak ada item terpilih
+                </p>
+              )}
+            </div>
+          </div>
+
           <div className="space-y-4 mb-6">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Subtotal ({4} item)</span>
-              <span className="font-medium">{formatPrice(5000)}</span>
+              <span className="text-muted-foreground">Subtotal </span>
+              <span className="font-medium">{formatPrice(subtotalPrice)}</span>
             </div>
 
             <div className="flex justify-between">
               <span className="text-muted-foreground">Ongkir</span>
-              <span className="font-medium">{5000}</span>
+              <span className="font-medium">{formatPrice(0)}</span>
             </div>
 
             <div className="flex justify-between">
@@ -159,7 +192,7 @@ export default function CheckoutPage() {
             <div className="flex justify-between text-lg">
               <span className="font-bold text-foreground">TOTAL</span>
               <span className="font-bold text-foreground">
-                {formatPrice(5000)}
+                {formatPrice(totalPrice)}
               </span>
             </div>
           </div>

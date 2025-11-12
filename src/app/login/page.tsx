@@ -5,7 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { signinSchema } from "@/lib/schema";
 import { setCredentials } from "@/redux/slices/authSlice";
+import { setCartCount } from "@/redux/slices/cartSlice";
 import { postLogin } from "@/services/auth";
+import { getCartsCount } from "@/services/participant";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, Eye, EyeOff, Lock, User } from "lucide-react";
 import Link from "next/link";
@@ -44,6 +46,9 @@ export default function LoginPage() {
           },
         })
       );
+
+      const countCart = await getCartsCount(res.data.token);
+      dispatch(setCartCount(countCart.data.count));
 
       setLoading(false);
       router.push("/");

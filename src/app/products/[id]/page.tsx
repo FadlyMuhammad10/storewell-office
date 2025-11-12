@@ -2,7 +2,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { productType } from "@/types";
+import { productType, SelectedVariants } from "@/types";
 import {
   ArrowLeft,
   Heart,
@@ -14,14 +14,22 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import React, { useCallback, useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatPrice } from "@/lib/utils";
-import { GetProductDetail } from "@/services/participant";
+import { getCartsCount, GetProductDetail } from "@/services/participant";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "@/redux/store";
+import { addCart } from "@/services/participant";
+import { addCartSchema } from "@/lib/schema";
+import z from "zod";
+import { incrementCartCount, setCartCount } from "@/redux/slices/cartSlice";
 
 export default function ProductDetailPage() {
   const params = useParams();
   const id = params.id as string;
+  const dispatch = useDispatch();
+  const router = useRouter();
   const [product, setProduct] = useState<productType>();
   const images = product?.images || [];
   // cari index image yang isPrimary true
@@ -30,11 +38,12 @@ export default function ProductDetailPage() {
   const [selectedImage, setSelectedImage] = useState(
     primaryIndex !== -1 ? primaryIndex : 0
   );
-  const [selectedVariants, setSelectedVariants] = useState({
+  const [selectedVariants, setSelectedVariants] = useState<SelectedVariants>({
     variants: [],
   });
-
   const [quantity, setQuantity] = useState(1);
+  const login = useSelector((state: RootState) => state.auth.isLogin);
+  const token = useSelector((state: RootState) => state.auth.token);
 
   const getProductDetail = useCallback(async () => {
     const data = await GetProductDetail(id);
@@ -46,7 +55,10 @@ export default function ProductDetailPage() {
     getProductDetail();
   }, [getProductDetail]);
 
-  const handleSelectVariant = (variant, vv) => {
+  const handleSelectVariant = (
+    variant: { id: number; name: string },
+    vv: { id: number; value: string }
+  ) => {
     setSelectedVariants((prev) => {
       const existing = prev.variants.find(
         (v) => v.variantTypeId === variant.id
@@ -82,10 +94,33 @@ export default function ProductDetailPage() {
     });
   };
 
-  const isSelected = (variantId, valueId) =>
+  const isSelected = (variantId: number, valueId: number) =>
     selectedVariants.variants.some(
       (v) => v.variantTypeId === variantId && v.valueId === valueId
     );
+
+  const handleToAddToCart = () => {
+    if (!login) {
+      return router.push("/login");
+    }
+
+    const payload: z.infer<typeof addCartSchema> = {
+      product_id: product?.id as number,
+      quantity,
+      variant_value_ids: selectedVariants.variants.map((v) => v.valueId),
+    };
+
+    const addToCart = async () => {
+      await addCart(payload, token!);
+
+      // Ambil jumlah cart terbaru
+      dispatch(incrementCartCount());
+      const res = await getCartsCount(token!);
+      dispatch(setCartCount(res.data.count));
+    };
+
+    addToCart();
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -223,7 +258,7 @@ export default function ProductDetailPage() {
                       key={vv.id}
                       onClick={() => handleSelectVariant(variant, vv)}
                       className={`px-4 py-2 border-2 rounded-lg font-bold text-sm uppercase tracking-wide transition-all ${
-                        isSelected(variant.id, vv.id)
+                        isSelected(variant.id!, vv.id!)
                           ? "border-accent bg-accent text-accent-foreground"
                           : "border-primary/20 hover:border-primary/40"
                       }`}
@@ -271,7 +306,7 @@ export default function ProductDetailPage() {
                 <Button
                   size="lg"
                   className="flex-1 h-14 text-lg font-bold uppercase tracking-wide bg-accent hover:bg-accent/90"
-                  // onClick={handleToClick}
+                  onClick={handleToAddToCart}
                 >
                   <ShoppingCart className="h-5 w-5 mr-2" />
                   ADD TO CART

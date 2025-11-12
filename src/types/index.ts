@@ -8,13 +8,13 @@ export type imageType = {
   isPrimary?: boolean | null;
 };
 export type variantType = {
-  id?: number;
+  id: number;
   name: string;
   type: string;
   values?: variantValueType[];
 };
 export type variantValueType = {
-  id?: number;
+  id: number;
   variantTypeId: number;
   value: string;
   hexCode?: string;
@@ -30,4 +30,15 @@ export type productType = {
   category?: categoryType;
   images?: imageType[];
   variants?: variantType[];
+};
+
+type Variant = {
+  variantTypeId: number;
+  name: string;
+  valueId: number;
+  value: string;
+};
+
+export type SelectedVariants = {
+  variants: Variant[];
 };
