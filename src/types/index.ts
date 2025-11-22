@@ -1,3 +1,6 @@
+import { checkoutSchema } from "@/lib/schema";
+import z from "zod";
+
 export type categoryType = {
   id: number;
   name: string;
@@ -41,4 +44,25 @@ type Variant = {
 
 export type SelectedVariants = {
   variants: Variant[];
+};
+
+export type CostPayload = {
+  origin: number;
+  destination: number;
+  weight: number;
+  courier?: string;
+};
+
+export type CheckoutRequest = z.infer<typeof checkoutSchema> & {
+  cart_item: number[];
+  origin_id: number;
+  price: number;
+  destination_id: number;
+  shipping_cost?: number;
+  weight?: number;
+  courier?: string;
+  courier_service?: string;
+  province_name?: string;
+  city_name?: string;
+  district_name?: string;
 };

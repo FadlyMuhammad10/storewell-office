@@ -1,0 +1,10 @@
+version: "3.8"
+
+services:
+  nextjs:
+    image: fadlymuhammad/storewell-fe:latest
+    container_name: storewell-fe
+    restart: always
+    env_file: .env
+    expose:
+      - "3000"

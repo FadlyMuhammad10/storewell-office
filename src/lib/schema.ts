@@ -16,9 +16,9 @@ export const signinSchema = z.object({
 
 export const checkoutSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  email: z.string().email("Invalid email address"),
-  postal_code: z.string().min(1, "Destination postal code is required"),
+  postalcode: z.string().min(1, "Destination postal code is required"),
   address: z.string().min(1, "Address is required"),
+  phone: z.string().min(1, "Phone number is required"),
 });
 
 export const addCartSchema = z.object({
