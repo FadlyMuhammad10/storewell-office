@@ -6,5 +6,5 @@ services:
     container_name: storewell-fe
     restart: always
     env_file: .env
-    expose:
-      - "${PORT}:3000"
+    ports:
+      - "${PORT}:${PORT}"
