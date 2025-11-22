@@ -7,4 +7,4 @@ services:
     restart: always
     env_file: .env
     expose:
-      - "${PORT}:${PORT}"
+      - "${PORT}:3000"
