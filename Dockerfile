@@ -24,5 +24,5 @@ RUN npm install --omit=dev
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 
-EXPOSE 3000
+EXPOSE 3001
 CMD ["npm", "start"]
