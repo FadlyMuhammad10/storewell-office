@@ -3,6 +3,10 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+# Inject ENV sebelum build
+ARG NEXT_PUBLIC_API
+ENV NEXT_PUBLIC_API=$NEXT_PUBLIC_API
+
 COPY package*.json ./
 RUN npm install
 

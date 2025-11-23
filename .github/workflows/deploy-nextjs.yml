@@ -19,7 +19,9 @@ jobs:
 
       - name: Build & Push Docker Image
         run: |
-          docker build -t fadlymuhammad/storewell-fe:latest .
+          docker build \
+            --build-arg NEXT_PUBLIC_API=${{ secrets.NEXT_PUBLIC_API }} \
+            -t fadlymuhammad/storewell-fe:latest .
           docker push fadlymuhammad/storewell-fe:latest
 
   deploy:

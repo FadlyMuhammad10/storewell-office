@@ -4,7 +4,6 @@ services:
   nextjs:
     image: fadlymuhammad/storewell-fe:latest
     container_name: storewell-fe
-    env_file: .env
     ports:
       - "${PORT}:${PORT}"
     restart: always
