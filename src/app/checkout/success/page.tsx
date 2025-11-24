@@ -1,7 +1,27 @@
 import { Button } from "@/components/ui/button";
+import { setCartCount } from "@/redux/slices/cartSlice";
+import { RootState } from "@/redux/store";
+import { getCartsCount } from "@/services/participant";
 import Link from "next/link";
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 
 export default function CheckoutSuccessPage() {
+  const dispatch = useDispatch();
+  const token = useSelector((state: RootState) => state.auth.token);
+
+  useEffect(() => {
+    const fetchCartCount = async () => {
+      try {
+        const countCart = await getCartsCount(token!);
+        dispatch(setCartCount(countCart.data.count));
+      } catch (error) {
+        console.error("Failed to fetch cart count:", error);
+      }
+    };
+
+    fetchCartCount();
+  }, [dispatch, token]);
   return (
     <main className="container mx-auto px-4 py-44">
       <div className="max-w-xl mx-auto text-center space-y-4">
