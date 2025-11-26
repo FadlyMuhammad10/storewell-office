@@ -215,7 +215,7 @@ export default function CheckoutPage() {
         ...data,
         cart_item: itemsCheckout.map((item) => Number(item.id)),
         origin_id: 3829,
-        price: totalPrice,
+        gross_amount: totalPrice,
         weight: 100,
         courier: "jne",
         destination_id: parseInt(selectedDistrict.district_id),

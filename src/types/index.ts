@@ -56,7 +56,7 @@ export type CostPayload = {
 export type CheckoutRequest = z.infer<typeof checkoutSchema> & {
   cart_item: number[];
   origin_id: number;
-  price: number;
+  gross_amount: number;
   destination_id: number;
   shipping_cost?: number;
   weight?: number;
