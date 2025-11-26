@@ -44,6 +44,7 @@ export default function ProductDetailPage() {
   const [quantity, setQuantity] = useState(1);
   const login = useSelector((state: RootState) => state.auth.isLogin);
   const token = useSelector((state: RootState) => state.auth.token);
+  const [isAddedToCart, setIsAddedToCart] = useState(false);
 
   const getProductDetail = useCallback(async () => {
     const data = await GetProductDetail(id);
@@ -117,6 +118,8 @@ export default function ProductDetailPage() {
       dispatch(incrementCartCount());
       const res = await getCartsCount(token!);
       dispatch(setCartCount(res.data.count));
+
+      setIsAddedToCart(true);
     };
 
     addToCart();
@@ -305,8 +308,12 @@ export default function ProductDetailPage() {
               <div className="flex gap-4">
                 <Button
                   size="lg"
-                  className="flex-1 h-14 text-lg font-bold uppercase tracking-wide bg-accent hover:bg-accent/90"
                   onClick={handleToAddToCart}
+                  className={`flex-1 h-14 text-lg font-bold uppercase tracking-wide transition-all ${
+                    isAddedToCart
+                      ? "bg-green-600 hover:bg-green-600"
+                      : "bg-accent hover:bg-accent/90"
+                  }`}
                 >
                   <ShoppingCart className="h-5 w-5 mr-2" />
                   ADD TO CART
