@@ -131,7 +131,10 @@ export default function OrderPage() {
                       </Badge>
                     </div>
                     <div className="flex items-end">
-                      <Link href={`/orders/${order.id}`} className="w-full">
+                      <Link
+                        href={`/orders/${order.order_id}`}
+                        className="w-full"
+                      >
                         <Button
                           variant="outline"
                           className="w-full border-primary text-primary hover:bg-primary hover:text-primary-foreground font-bold bg-transparent"
