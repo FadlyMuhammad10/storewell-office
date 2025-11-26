@@ -80,3 +80,15 @@ export async function postCheckout(data: CheckoutRequest, token: string) {
 
   return CallAPI({ url, method: "POST", data, serverToken: token });
 }
+
+export async function getOrders(token: string) {
+  const url = `/participant/orders`;
+
+  return CallAPI({ url, method: "GET", serverToken: token });
+}
+
+export async function detailOrder(id: string, token: string) {
+  const url = `/participant/order/detail/${id}`;
+
+  return CallAPI({ url, method: "GET", serverToken: token });
+}

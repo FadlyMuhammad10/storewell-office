@@ -46,3 +46,31 @@ export interface CostItem {
   cost: number;
   etd?: string;
 }
+
+export interface OrderItem {
+  id: number;
+  order_id: string;
+  order_date: string;
+  status: string;
+  total_amount: number;
+  name?: string;
+  email?: string;
+  price?: number;
+  address?: string;
+  phone?: string;
+  shipping_cost?: number;
+  payment_type?: string;
+  carts?: {
+    id: number;
+    quantity: number;
+    price: number;
+    product: {
+      id: number;
+      name: string;
+      images: {
+        image_url?: string;
+        isPrimary?: boolean | null;
+      }[];
+    };
+  }[];
+}
