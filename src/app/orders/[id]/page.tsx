@@ -280,7 +280,7 @@ export default function OrderDetail() {
               </div>
             </div>
 
-            {order.status === "pending" || order.status === "failure" ? (
+            {order.status === "pending" || order.status === "expire" ? (
               <div className="mt-6">
                 <Button
                   className="w-full bg-red-500 text-red-50 hover:bg-red-600 font-bold"
