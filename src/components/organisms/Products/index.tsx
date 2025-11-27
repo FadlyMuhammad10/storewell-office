@@ -78,9 +78,6 @@ export default function ProductsSection() {
                     alt={product.name}
                     className="w-full h-72 object-cover group-hover:scale-110 transition-transform duration-500"
                   />
-                  {/* <Badge className="absolute top-4 left-4 bg-accent text-accent-foreground font-black text-xs px-3 py-1 uppercase tracking-wider">
-                    {product.badge}
-                  </Badge> */}
                   <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
                     <Button
                       size="icon"
@@ -93,18 +90,6 @@ export default function ProductsSection() {
                 </div>
 
                 <CardContent className="p-6">
-                  {/* <div className="flex items-center gap-2 mb-3">
-                    <div className="flex items-center">
-                      <Star className="h-4 w-4 fill-accent text-accent" />
-                      <span className="text-sm font-bold ml-1">
-                        s{product.rating}
-                      </span>
-                    </div>
-                    <span className="text-sm text-muted-foreground font-medium">
-                      ({product.reviews})
-                    </span>
-                  </div> */}
-
                   <h3 className="font-bold text-lg mb-4 text-balance uppercase tracking-wide group-hover:text-accent transition-colors">
                     {product.name}
                   </h3>
@@ -114,9 +99,6 @@ export default function ProductsSection() {
                       <span className="font-black text-xl text-primary">
                         {formatPrice(product.price!)}
                       </span>
-                      {/* <span className="text-sm text-muted-foreground line-through font-medium">
-                        ${product.price}
-                      </span> */}
                     </div>
                     <Button
                       size="lg"

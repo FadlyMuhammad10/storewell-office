@@ -1,7 +1,15 @@
 "use client";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { addCartSchema } from "@/lib/schema";
+import { formatPrice } from "@/lib/utils";
+import { incrementCartCount, setCartCount } from "@/redux/slices/cartSlice";
+import { RootState } from "@/redux/store";
+import {
+  addCart,
+  getCartsCount,
+  GetProductDetail,
+} from "@/services/participant";
 import { productType, SelectedVariants } from "@/types";
 import {
   ArrowLeft,
@@ -13,17 +21,10 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import React, { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Skeleton } from "@/components/ui/skeleton";
-import { formatPrice } from "@/lib/utils";
-import { getCartsCount, GetProductDetail } from "@/services/participant";
+import { useCallback, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { RootState } from "@/redux/store";
-import { addCart } from "@/services/participant";
-import { addCartSchema } from "@/lib/schema";
 import z from "zod";
-import { incrementCartCount, setCartCount } from "@/redux/slices/cartSlice";
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -213,22 +214,6 @@ export default function ProductDetailPage() {
               <h1 className="text-4xl lg:text-5xl font-black mb-4 text-balance uppercase tracking-tight">
                 {product?.name}
               </h1>
-              {/* <div className="flex items-center gap-4 mb-6">
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center">
-                    <Star className="h-5 w-5 fill-accent text-accent" />
-                    <span className="text-lg font-bold ml-1">
-                      {product.rating}
-                    </span>
-                  </div>
-                  <span className="text-muted-foreground font-medium">
-                    ({product.reviews} reviews)
-                  </span>
-                </div>
-                <span className="text-muted-foreground">
-                  SKU: {product.sku}
-                </span>
-              </div> */}
             </div>
 
             {/* Price */}
@@ -236,12 +221,6 @@ export default function ProductDetailPage() {
               <span className="text-4xl font-black text-primary">
                 {formatPrice(product?.price || 0)}
               </span>
-              {/* <span className="text-xl text-muted-foreground line-through font-medium">
-                ${5000}
-              </span>
-              <Badge variant="destructive" className="text-sm font-bold">
-                -{0}%
-              </Badge> */}
             </div>
 
             {/* Description */}
@@ -344,152 +323,9 @@ export default function ProductDetailPage() {
               >
                 BUY NOW
               </Button>
-
-              {/* Selection validation message */}
-              {/* {(!selectedSize || !selectedColor) && (
-                <p className="text-sm text-muted-foreground text-center">
-                  Please select size and color to continue
-                </p>
-              )} */}
             </div>
-
-            {/* Features */}
-            {/* <Card className="border-2 border-primary/20">
-              <CardContent className="p-6">
-                <h3 className="font-bold text-lg mb-4 uppercase tracking-wide">
-                  FEATURES
-                </h3>
-                <ul className="space-y-2">
-                  {product.features.map((feature, index) => (
-                    <li key={index} className="flex items-center gap-3">
-                      <div className="w-2 h-2 bg-accent rounded-full" />
-                      <span className="font-medium">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card> */}
           </div>
         </div>
-
-        {/* Product Details Tabs */}
-        {/* <div className="mt-20">
-          <Tabs defaultValue="details" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 h-14 bg-primary/10 border-2 border-primary/20">
-              <TabsTrigger
-                value="details"
-                className="font-bold uppercase tracking-wide data-[state=active]:bg-accent"
-              >
-                DETAILS
-              </TabsTrigger>
-              <TabsTrigger
-                value="reviews"
-                className="font-bold uppercase tracking-wide data-[state=active]:bg-accent"
-              >
-                REVIEWS ({product.reviews})
-              </TabsTrigger>
-              <TabsTrigger
-                value="shipping"
-                className="font-bold uppercase tracking-wide data-[state=active]:bg-accent"
-              >
-                SHIPPING
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="details" className="mt-8">
-              <Card className="border-2 border-primary/20">
-                <CardContent className="p-8">
-                  <div className="prose prose-lg max-w-none">
-                    <h3 className="font-bold text-xl mb-4 uppercase tracking-wide">
-                      PRODUCT DETAILS
-                    </h3>
-                    <p className="text-muted-foreground leading-relaxed mb-6">
-                      {product.description}
-                    </p>
-                    <Separator className="my-6" />
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <h4 className="font-bold mb-3 uppercase tracking-wide">
-                          SPECIFICATIONS
-                        </h4>
-                        <ul className="space-y-2 text-muted-foreground">
-                          <li>
-                            <strong>Category:</strong> {product.category}
-                          </li>
-                          <li>
-                            <strong>SKU:</strong> {product.sku}
-                          </li>
-                          <li>
-                            <strong>Available Sizes:</strong>{" "}
-                            {product.sizes.join(", ")}
-                          </li>
-                          <li>
-                            <strong>Available Colors:</strong>{" "}
-                            {product.colors.join(", ")}
-                          </li>
-                        </ul>
-                      </div>
-                      <div>
-                        <h4 className="font-bold mb-3 uppercase tracking-wide">
-                          CARE INSTRUCTIONS
-                        </h4>
-                        <ul className="space-y-2 text-muted-foreground">
-                          <li>• Machine wash cold</li>
-                          <li>• Do not bleach</li>
-                          <li>• Tumble dry low</li>
-                          <li>• Iron on low heat</li>
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="reviews" className="mt-8">
-              <Card className="border-2 border-primary/20">
-                <CardContent className="p-8">
-                  <h3 className="font-bold text-xl mb-6 uppercase tracking-wide">
-                    CUSTOMER REVIEWS
-                  </h3>
-                  <div className="text-center py-12">
-                    <p className="text-muted-foreground text-lg">
-                      Reviews coming soon...
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="shipping" className="mt-8">
-              <Card className="border-2 border-primary/20">
-                <CardContent className="p-8">
-                  <h3 className="font-bold text-xl mb-6 uppercase tracking-wide">
-                    SHIPPING INFO
-                  </h3>
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-2 h-2 bg-accent rounded-full" />
-                      <span>Free shipping on orders over $100</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="w-2 h-2 bg-accent rounded-full" />
-                      <span>Standard delivery: 3-5 business days</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="w-2 h-2 bg-accent rounded-full" />
-                      <span>Express delivery: 1-2 business days</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="w-2 h-2 bg-accent rounded-full" />
-                      <span>30-day return policy</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        </div> */}
       </div>
     </div>
   );

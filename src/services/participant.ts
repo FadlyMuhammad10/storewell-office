@@ -3,6 +3,12 @@ import { addCartSchema } from "@/lib/schema";
 import { CheckoutRequest, CostPayload } from "@/types";
 import z from "zod";
 
+export async function GetCategories() {
+  const url = `/participant/categories`;
+
+  return CallAPI({ url, method: "GET" });
+}
+
 export async function GetProducts() {
   const url = `/participant/products`;
 

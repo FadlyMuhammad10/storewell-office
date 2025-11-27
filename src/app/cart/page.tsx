@@ -13,7 +13,6 @@ import {
   getCartsCount,
   updateCart,
 } from "@/services/participant";
-import { productType } from "@/types";
 import { CartItem } from "@/types/interface";
 import { ArrowLeft, Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 import Image from "next/image";
@@ -269,17 +268,6 @@ export default function CartPage() {
                   </Card>
                 ))}
               </div>
-
-              {/* <div className="mt-6">
-                <Button
-                  variant="outline"
-                  onClick={() => dispatch(resetCart())}
-                  className="text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground bg-transparent"
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  CLEAR CART
-                </Button>
-              </div> */}
             </div>
 
             {/* Order Summary */}
@@ -298,10 +286,6 @@ export default function CartPage() {
                       {formatPrice(getSelectedTotal())}
                     </span>
                   </div>
-                  {/* <div className="flex justify-between">
-                    <span className="text-muted-foreground">Shipping</span>
-                    <span className="font-medium text-primary">FREE</span>
-                  </div> */}
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Tax</span>
                     <span className="font-medium">{formatPrice(0)}</span>
