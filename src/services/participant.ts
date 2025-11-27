@@ -92,3 +92,9 @@ export async function detailOrder(id: string, token: string) {
 
   return CallAPI({ url, method: "GET", serverToken: token });
 }
+
+export async function payAgain(id: string, token: string) {
+  const url = `/participant/order/${id}/pay-again`;
+
+  return CallAPI({ url, method: "POST", serverToken: token });
+}

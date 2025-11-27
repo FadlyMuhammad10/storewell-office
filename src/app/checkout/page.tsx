@@ -228,7 +228,23 @@ export default function CheckoutPage() {
 
       const res = await postCheckout(payload, token!);
 
-      window.location.href = res.data.redirect_url;
+      const snapToken = res.data.token;
+      const orderId = res.data.order_id;
+
+      window.snap.pay(snapToken, {
+        onSuccess: function () {
+          window.location.href = `/checkout/success?order_id=${orderId}`;
+        },
+        onPending: function () {
+          window.location.href = `/checkout/pending?order_id=${orderId}`;
+        },
+        onError: function () {
+          alert("Payment error");
+        },
+        onClose: function () {
+          console.log("User closed snap");
+        },
+      });
     } catch (error) {
       console.log("error", error);
     }

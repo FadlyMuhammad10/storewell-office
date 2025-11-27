@@ -4,6 +4,7 @@ import { Poppins } from "next/font/google";
 import "./globals.css";
 import Footer from "@/components/layouts/Footer";
 import ReduxProvider from "./providers/ReduxProvider";
+import Script from "next/script";
 
 const poppins = Poppins({
   weight: ["400", "500", "600", "700", "800", "900"],
@@ -28,6 +29,11 @@ export default function RootLayout({
           <Navbar />
           <main>{children}</main>
           <Footer />
+          <Script
+            src="https://app.sandbox.midtrans.com/snap/snap.js"
+            data-client-key={process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY}
+            strategy="afterInteractive"
+          />
         </ReduxProvider>
       </body>
     </html>

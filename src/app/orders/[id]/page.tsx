@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { formatPrice } from "@/lib/utils";
 import { RootState } from "@/redux/store";
-import { detailOrder } from "@/services/participant";
+import { detailOrder, payAgain } from "@/services/participant";
 import { OrderItem } from "@/types/interface";
 import { ArrowLeft, MapPin, Phone } from "lucide-react";
 import Image from "next/image";
@@ -68,6 +68,32 @@ export default function OrderDetail() {
     (total, item) => total + item.price * item.quantity,
     0
   );
+
+  const handlePayAgain = () => {
+    const pay = async () => {
+      const res = await payAgain(id, token!);
+
+      const snapToken = res.data.token;
+      const orderId = res.data.order_id;
+
+      window.snap.pay(snapToken, {
+        onSuccess: function () {
+          window.location.href = `/checkout/success?order_id=${orderId}`;
+        },
+        onPending: function () {
+          window.location.href = `/checkout/pending?order_id=${orderId}`;
+        },
+        onError: function () {
+          alert("Payment error");
+        },
+        onClose: function () {
+          console.log("User closed snap");
+        },
+      });
+    };
+
+    pay();
+  };
 
   if (!order) {
     return (
@@ -231,7 +257,6 @@ export default function OrderDetail() {
                 </span>
               </div>
             </div>
-
             <div className="space-y-3 pt-6 border-t border-border">
               <div>
                 <p className="text-sm text-muted-foreground font-semibold mb-1">
@@ -250,16 +275,29 @@ export default function OrderDetail() {
                   Metode Pembayaran
                 </p>
                 <p className="text-foreground capitalize">
-                  {order.payment_type}
+                  {order.payment_type || "-"}
                 </p>
               </div>
             </div>
 
-            <Link href="/products" className="mt-6 block">
-              <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-bold">
-                Belanja Lagi
-              </Button>
-            </Link>
+            {order.status === "pending" || order.status === "failure" ? (
+              <div className="mt-6">
+                <Button
+                  className="w-full bg-red-500 text-red-50 hover:bg-red-600 font-bold"
+                  onClick={handlePayAgain}
+                >
+                  Bayar Lagi
+                </Button>
+              </div>
+            ) : null}
+
+            {order.status === "settlement" ? (
+              <Link href="/products" className="mt-6 block">
+                <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-bold">
+                  Belanja Lagi
+                </Button>
+              </Link>
+            ) : null}
           </Card>
         </div>
       </div>
