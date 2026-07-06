@@ -60,8 +60,8 @@ export default function CheckoutPage() {
   });
 
   const subtotalPrice = itemsCheckout.reduce(
-    (total, item) => total + item.product.price! * item.quantity,
-    0
+    (total, item) => total + item.variant_price! * item.qty,
+    0,
   );
 
   const totalPrice = subtotalPrice + costs.cost;
@@ -69,10 +69,14 @@ export default function CheckoutPage() {
   const form = useForm({
     resolver: zodResolver(checkoutSchema),
     values: {
-      name: "",
-      phone: "",
+      full_name: "",
+      phone_number: "",
       address: "",
-      postalcode: "",
+      nominal_amount: subtotalPrice,
+      final_amount: totalPrice,
+      cart_items: itemsCheckout.map((item) => ({ cart_id: item.id })) as [
+        { cart_id: number },
+      ],
     },
   });
 
@@ -100,7 +104,7 @@ export default function CheckoutPage() {
       try {
         const res = await getCities(
           Number(selectedProvince.province_id),
-          token!
+          token!,
         );
         setCity(res?.data);
       } catch (error) {
@@ -134,7 +138,7 @@ export default function CheckoutPage() {
 
   const handleProvinceChange = (province_id: string) => {
     const selected = provinces.find(
-      (item) => item.id.toString() === province_id
+      (item) => item.id.toString() === province_id,
     );
     if (selected) {
       setSelectedProvince({
@@ -209,42 +213,12 @@ export default function CheckoutPage() {
     ? formatPrice(costs.cost)
     : "Isi alamat untuk estimasi ongkir";
 
-  const formSubmit = async (data: z.infer<typeof checkoutSchema>) => {
+  const formSubmit = async (data: unknown) => {
+    const checkoutData = data as CheckoutRequest;
     try {
-      const payload: CheckoutRequest = {
-        ...data,
-        cart_item: itemsCheckout.map((item) => Number(item.id)),
-        origin_id: 3829,
-        gross_amount: totalPrice,
-        weight: 100,
-        courier: "jne",
-        destination_id: parseInt(selectedDistrict.district_id),
-        city_name: selectedCity.city_name,
-        province_name: selectedProvince.province,
-        district_name: selectedDistrict.district_name,
-        courier_service: costs.service,
-        shipping_cost: costs.cost,
-      };
-
-      const res = await postCheckout(payload, token!);
-
-      const snapToken = res.data.token;
-      const orderId = res.data.order_id;
-
-      window.snap.pay(snapToken, {
-        onSuccess: function () {
-          window.location.href = `/checkout/success?order_id=${orderId}`;
-        },
-        onPending: function () {
-          window.location.href = `/checkout/pending?order_id=${orderId}`;
-        },
-        onError: function () {
-          alert("Payment error");
-        },
-        onClose: function () {
-          console.log("User closed snap");
-        },
-      });
+      const res = await postCheckout(checkoutData, token!);
+      const orderCode = res.data.order_code;
+      window.location.href = `/orders/${orderCode}`;
     } catch (error) {
       console.log("error", error);
     }
@@ -270,7 +244,7 @@ export default function CheckoutPage() {
                 <Input
                   id="fullName"
                   placeholder="Nama sesuai pengiriman"
-                  {...form.register("name")}
+                  {...form.register("full_name")}
                 />
               </div>
               <div className="flex flex-col gap-2">
@@ -278,7 +252,7 @@ export default function CheckoutPage() {
                 <Input
                   id="phone"
                   placeholder="08xxxxxxxxxx"
-                  {...form.register("phone")}
+                  {...form.register("phone_number")}
                 />
               </div>
             </div>
@@ -366,14 +340,14 @@ export default function CheckoutPage() {
                 </Select>
               </div>
 
-              <div className="flex flex-col gap-2">
+              {/* <div className="flex flex-col gap-2">
                 <Label htmlFor="postalCode">Kode Pos</Label>
                 <Input
                   id="postalCode"
                   placeholder="Kode pos"
                   {...form.register("postalcode")}
                 />
-              </div>
+              </div> */}
             </div>
 
             <div className="pt-2">
@@ -405,10 +379,8 @@ export default function CheckoutPage() {
               {itemsCheckout.length > 0 ? (
                 itemsCheckout.map((item, i) => (
                   <div key={i} className="flex justify-between text-sm">
-                    <span className="text-foreground">{item.product.name}</span>
-                    <span className="text-muted-foreground">
-                      {item.quantity}x
-                    </span>
+                    <span className="text-foreground">{item.product_name}</span>
+                    <span className="text-muted-foreground">{item.qty}x</span>
                   </div>
                 ))
               ) : (

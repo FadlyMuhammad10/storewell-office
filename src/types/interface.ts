@@ -1,18 +1,19 @@
-import { productType } from ".";
-
 export interface CartItem {
-  id: string;
-  product: productType;
-  quantity: number;
-  cartVariant: [
+  id: number;
+  qty: number;
+  product_variant_id: number;
+  product_name: string;
+  variant_price: number;
+  total_price: number;
+  image_url: string;
+  variant_stock: number;
+  allow_negative_stock: boolean;
+  combinations: [
     {
-      variantValue: {
-        variantType: {
-          name: string;
-        };
-        value: string;
-      };
-    }
+      product_variant_option_value_id: number;
+      variant_value_id: number;
+      variant_value_name: string;
+    },
   ];
 }
 
@@ -49,28 +50,47 @@ export interface CostItem {
 
 export interface OrderItem {
   id: number;
-  order_id: string;
-  order_date: string;
+  order_code: string;
   status: string;
-  total_amount: number;
-  name?: string;
-  email?: string;
-  price?: number;
-  address?: string;
-  phone?: string;
-  shipping_cost?: number;
-  payment_type?: string;
-  carts?: {
+  process_status: string;
+  final_amount: number;
+  nominal_amount: number;
+  order_date: string;
+  email: string;
+  full_name: string;
+  address: string;
+  phone_number: string;
+  transaction_time: string;
+  payment_type: string;
+  details: {
     id: number;
-    quantity: number;
+    product_id: number;
+    product_variant_id: number;
+    product_name: string;
     price: number;
-    product: {
-      id: number;
-      name: string;
-      images: {
-        image_url?: string;
-        isPrimary?: boolean | null;
-      }[];
-    };
+    qty: number;
+    subtotal: number;
+    image_url: string;
   }[];
+}
+
+export interface queryParamsProduct {
+  page: number;
+  per_page: number;
+  search?: string;
+  category_id?: number;
+}
+export interface Product {
+  id: number;
+  name: string;
+  base_price: number;
+  product_category_id: number;
+  category_name: string;
+  images: [
+    {
+      id: number;
+      image_url: string;
+      is_primary: boolean;
+    },
+  ];
 }

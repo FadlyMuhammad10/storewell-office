@@ -1,6 +1,3 @@
-import { checkoutSchema } from "@/lib/schema";
-import z from "zod";
-
 export type categoryType = {
   id: number;
   name: string;
@@ -26,7 +23,7 @@ export type variantValueType = {
 export type productType = {
   id: number;
   name: string;
-  price?: number;
+  base_price: number;
   description?: string;
   stock?: number;
   status?: boolean;
@@ -53,16 +50,62 @@ export type CostPayload = {
   courier?: string;
 };
 
-export type CheckoutRequest = z.infer<typeof checkoutSchema> & {
-  cart_item: number[];
-  origin_id: number;
-  gross_amount: number;
-  destination_id: number;
-  shipping_cost?: number;
-  weight?: number;
-  courier?: string;
-  courier_service?: string;
-  province_name?: string;
-  city_name?: string;
-  district_name?: string;
+export type CheckoutRequest = {
+  full_name: string;
+  phone_number: string;
+  address: string;
+  nominal_amount: number;
+  final_amount: number;
+  cart_items?: [
+    {
+      cart_id: number;
+    },
+  ];
 };
+
+export type CreatePaymentRequest = {
+  order_code: string;
+};
+
+export interface ProductDetail {
+  id: number;
+  name: string;
+  description: string;
+  base_price: number;
+  is_sale: boolean;
+  allow_negative_stock: boolean;
+  product_unit_id: number;
+  unit_name: string;
+  product_category_id: number;
+  category_name: string;
+  images: [
+    {
+      id: number;
+      image_url: string;
+      is_primary: boolean;
+    },
+  ];
+  variants: [
+    {
+      variant_type_id: number;
+      variant_type_is_visible: boolean;
+      variant_type_name: string;
+      values: [
+        {
+          variant_value_id: number;
+          variant_value_is_visible: boolean;
+          variant_value_name: string;
+        },
+      ];
+    },
+  ];
+  combinations: [
+    {
+      product_variant_id: number;
+      price: number;
+      stock: number;
+      is_visible: boolean;
+      option_value_ids: number[];
+    },
+  ];
+}

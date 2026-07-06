@@ -10,7 +10,7 @@ import {
   getCartsCount,
   GetProductDetail,
 } from "@/services/participant";
-import { productType, SelectedVariants } from "@/types";
+import { ProductDetail, SelectedVariants } from "@/types";
 import {
   ArrowLeft,
   Heart,
@@ -31,13 +31,13 @@ export default function ProductDetailPage() {
   const id = params.id as string;
   const dispatch = useDispatch();
   const router = useRouter();
-  const [product, setProduct] = useState<productType>();
+  const [product, setProduct] = useState<ProductDetail>();
   const images = product?.images || [];
   // cari index image yang isPrimary true
-  const primaryIndex = images.findIndex((img) => img.isPrimary === true);
+  const primaryIndex = images.findIndex((img) => img.is_primary === true);
   // simpan index, bukan url
   const [selectedImage, setSelectedImage] = useState(
-    primaryIndex !== -1 ? primaryIndex : 0
+    primaryIndex !== -1 ? primaryIndex : 0,
   );
   const [selectedVariants, setSelectedVariants] = useState<SelectedVariants>({
     variants: [],
@@ -59,11 +59,11 @@ export default function ProductDetailPage() {
 
   const handleSelectVariant = (
     variant: { id: number; name: string },
-    vv: { id: number; value: string }
+    vv: { id: number; value: string },
   ) => {
     setSelectedVariants((prev) => {
       const existing = prev.variants.find(
-        (v) => v.variantTypeId === variant.id
+        (v) => v.variantTypeId === variant.id,
       );
 
       let updatedVariants;
@@ -77,7 +77,7 @@ export default function ProductDetailPage() {
                 valueId: vv.id,
                 value: vv.value,
               }
-            : v
+            : v,
         );
       } else {
         // Tambahkan varian baru
@@ -98,18 +98,87 @@ export default function ProductDetailPage() {
 
   const isSelected = (variantId: number, valueId: number) =>
     selectedVariants.variants.some(
-      (v) => v.variantTypeId === variantId && v.valueId === valueId
+      (v) => v.variantTypeId === variantId && v.valueId === valueId,
     );
+
+  // Get product_variant_id by matching selected variant values with combinations
+  const getProductVariantInfo = () => {
+    if (!product?.combinations || selectedVariants.variants.length === 0) {
+      return null;
+    }
+
+    const selectedValueIds = selectedVariants.variants
+      .map((v) => v.valueId)
+      .sort();
+
+    const matchingCombination = product.combinations.find((combo) => {
+      const comboValueIds = [...combo.option_value_ids].sort();
+      return (
+        selectedValueIds.length === comboValueIds.length &&
+        selectedValueIds.every((id, index) => id === comboValueIds[index])
+      );
+    });
+
+    return matchingCombination || null;
+  };
+
+  console.log("getProductVariantInfo", getProductVariantInfo());
+
+  // Get total stock atau stock yang sesuai dengan variant
+  const getTotalStock = () => {
+    if (!product?.combinations) {
+      return 0;
+    }
+
+    const totalStock = product.combinations.reduce(
+      (total, combo) => total + (combo.stock || 0),
+      0,
+    );
+    // Jika belum ada variant dipilih, jumlahkan semua stock
+    if (selectedVariants.variants.length === 0) {
+      return totalStock;
+    }
+
+    // Jika sudah ada variant dipilih, ambil stock yang sesuai
+    return getProductVariantInfo()?.stock || totalStock;
+  };
+  const getPriceVariant = () => {
+    if (!product?.combinations) {
+      return 0;
+    }
+
+    if (selectedVariants.variants.length === 0) {
+      return product.base_price || 0;
+    }
+
+    return getProductVariantInfo()?.price || product.base_price;
+  };
+
+  const selectStock = getTotalStock();
+  const selectPrice = getPriceVariant();
+
+  // Check apakah semua variants sudah dipilih atau allow_negative_stock true
+  const areAllVariantsSelected = () => {
+    if (!product?.variants) {
+      return true; // Jika tidak ada variants, always true
+    }
+    return selectedVariants.variants.length === product.variants.length;
+  };
+
+  const isVariantSelectionComplete =
+    product?.allow_negative_stock || areAllVariantsSelected();
 
   const handleToAddToCart = () => {
     if (!login) {
       return router.push("/login");
     }
 
+    const productVariantId = getProductVariantInfo()?.product_variant_id;
+
     const payload: z.infer<typeof addCartSchema> = {
       product_id: product?.id as number,
       quantity,
-      variant_value_ids: selectedVariants.variants.map((v) => v.valueId),
+      product_variant_id: productVariantId as number,
     };
 
     const addToCart = async () => {
@@ -146,7 +215,7 @@ export default function ProductDetailPage() {
           </Link>
           <span className="text-muted-foreground">/</span>
           <span className="text-primary font-bold uppercase">
-            {product?.category?.name}
+            {product?.category_name}
           </span>
         </div>
       </div>
@@ -173,7 +242,7 @@ export default function ProductDetailPage() {
                   width={600}
                   height={600}
                   src={
-                    images[selectedImage]?.image_url || "/placeholder.png" // fallback agar tidak empty string
+                    images[selectedImage]?.image_url || "/default-image.png" // fallback agar tidak empty string
                   }
                   alt={product.name || "Product image"}
                   className="w-full h-[600px] rounded-xl object-cover"
@@ -198,7 +267,7 @@ export default function ProductDetailPage() {
                   <Image
                     width={200}
                     height={200}
-                    src={image.image_url || "/placeholder.svg"}
+                    src={image?.image_url || "/default-image.png"}
                     alt={`${product?.name} view ${index + 1}`}
                     className="w-full h-24 object-cover"
                   />
@@ -219,7 +288,7 @@ export default function ProductDetailPage() {
             {/* Price */}
             <div className="flex items-center gap-4">
               <span className="text-4xl font-black text-primary">
-                {formatPrice(product?.price || 0)}
+                {formatPrice(selectPrice)}
               </span>
             </div>
 
@@ -228,25 +297,41 @@ export default function ProductDetailPage() {
               {product?.description}
             </p>
 
-            {product?.variants?.map((variant) => (
-              <div key={variant.id}>
+            {product?.variants?.map((variant, index) => (
+              <div key={index}>
                 <h3 className="font-bold text-lg mb-4 uppercase tracking-wide">
-                  {variant.name}
+                  {variant.variant_type_name}
                 </h3>
                 <div className="flex gap-3">
-                  {variant?.values?.map((vv) => (
-                    <button
-                      type="button"
-                      key={vv.id}
-                      onClick={() => handleSelectVariant(variant, vv)}
-                      className={`px-4 py-2 border-2 rounded-lg font-bold text-sm uppercase tracking-wide transition-all ${
-                        isSelected(variant.id!, vv.id!)
-                          ? "border-accent bg-accent text-accent-foreground"
-                          : "border-primary/20 hover:border-primary/40"
-                      }`}
-                    >
-                      {vv.value}
-                    </button>
+                  {variant?.values?.map((vv, vvIndex) => (
+                    <div key={vvIndex}>
+                      <button
+                        type="button"
+                        key={vv.variant_value_id}
+                        onClick={() =>
+                          handleSelectVariant(
+                            {
+                              id: variant.variant_type_id,
+                              name: variant.variant_type_name,
+                            },
+                            {
+                              id: vv.variant_value_id,
+                              value: vv.variant_value_name,
+                            },
+                          )
+                        }
+                        className={`px-4 py-2 border-2 rounded-lg font-bold text-sm uppercase tracking-wide transition-all ${
+                          isSelected(
+                            variant.variant_type_id,
+                            vv.variant_value_id,
+                          )
+                            ? "border-accent bg-accent text-accent-foreground"
+                            : "border-primary/20 hover:border-primary/40"
+                        }`}
+                      >
+                        {vv.variant_value_name}
+                      </button>
+                    </div>
                   ))}
                 </div>
               </div>
@@ -263,22 +348,41 @@ export default function ProductDetailPage() {
                     variant="ghost"
                     size="icon"
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                    disabled={!isVariantSelectionComplete || quantity <= 1}
                     className="h-12 w-12"
                   >
                     <Minus className="h-4 w-4" />
                   </Button>
-                  <span className="px-4 py-2 font-bold text-lg min-w-12 text-center">
+                  <span
+                    className={`px-4 py-2 font-bold text-lg min-w-12 text-center ${!isVariantSelectionComplete && !product?.allow_negative_stock ? "text-gray-500" : ""}`}
+                  >
                     {quantity}
                   </span>
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => setQuantity(quantity + 1)}
+                    onClick={() =>
+                      setQuantity(
+                        product?.allow_negative_stock
+                          ? quantity + 1
+                          : Math.min(selectStock, quantity + 1),
+                      )
+                    }
+                    disabled={
+                      !isVariantSelectionComplete ||
+                      (!product?.allow_negative_stock &&
+                        quantity >= selectStock)
+                    }
                     className="h-12 w-12"
                   >
                     <Plus className="h-4 w-4" />
                   </Button>
                 </div>
+                <p className="text-sm text-muted-foreground">
+                  {product?.allow_negative_stock
+                    ? "In Stock"
+                    : `In stock (${selectStock} available)`}
+                </p>
               </div>
             </div>
 
@@ -287,6 +391,7 @@ export default function ProductDetailPage() {
               <div className="flex gap-4">
                 <Button
                   size="lg"
+                  disabled={!isVariantSelectionComplete}
                   onClick={handleToAddToCart}
                   className={`flex-1 h-14 text-lg font-bold uppercase tracking-wide transition-all ${
                     isAddedToCart
@@ -318,7 +423,7 @@ export default function ProductDetailPage() {
                 size="lg"
                 variant="outline"
                 // onClick={handleBuyNow}
-                // disabled={!selectedSize || !selectedColor}
+                disabled={!isVariantSelectionComplete}
                 className="w-full h-14 text-lg font-bold uppercase tracking-wide border-2 border-primary hover:bg-primary hover:text-primary-foreground bg-transparent"
               >
                 BUY NOW

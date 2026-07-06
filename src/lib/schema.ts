@@ -15,14 +15,24 @@ export const signinSchema = z.object({
 });
 
 export const checkoutSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  postalcode: z.string().min(1, "Destination postal code is required"),
-  address: z.string().min(1, "Address is required"),
-  phone: z.string().min(1, "Phone number is required"),
+  full_name: z.string().min(1),
+  phone_number: z.string().min(1),
+  address: z.string().min(1),
+  nominal_amount: z.number().positive(),
+  final_amount: z.number().positive(),
+  cart_items: z.array(
+    z.object({
+      cart_id: z.number().positive(),
+    }),
+  ),
 });
 
 export const addCartSchema = z.object({
   product_id: z.number().positive(),
   quantity: z.number().positive(),
-  variant_value_ids: z.array(z.number()).optional(),
+  product_variant_id: z.number().positive(),
+});
+
+export const createPaymentSchema = z.object({
+  order_code: z.string().min(1),
 });

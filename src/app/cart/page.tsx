@@ -55,11 +55,8 @@ export default function CartPage() {
     setUpdating(id);
     try {
       await updateCart(id, quantity, token!);
-      setCarts((prev) =>
-        prev.map((item) =>
-          Number(item.id) === id ? { ...item, quantity } : item
-        )
-      );
+
+      await getCartsData();
     } finally {
       setUpdating(null);
     }
@@ -70,7 +67,7 @@ export default function CartPage() {
       (prev) =>
         prev.includes(cartId)
           ? prev.filter((id) => id !== cartId) // uncheck
-          : [...prev, cartId] // check
+          : [...prev, cartId], // check
     );
   };
 
@@ -84,18 +81,34 @@ export default function CartPage() {
 
   const getSelectedTotal = () => {
     const selectedItems = carts.filter((item) =>
-      selectedCarts.includes(Number(item.id))
+      selectedCarts.includes(Number(item.id)),
     );
 
     return selectedItems.reduce(
-      (total, item) => total + item.product.price! * item.quantity,
-      0
+      (total, item) => total + item.variant_price * item.qty,
+      0,
     );
   };
 
+  const selectedItems = carts.filter((item) =>
+    selectedCarts.includes(Number(item.id)),
+  );
+
+  const invalidStockItems = selectedItems.filter((item) => {
+    if (item.allow_negative_stock) {
+      return false;
+    }
+
+    return (
+      (item.variant_stock ?? 0) <= 0 || item.qty > (item.variant_stock ?? 0)
+    );
+  });
+
+  const canCheckout = invalidStockItems.length === 0;
+
   const handleCheckout = (selectedIds: number[]) => {
     const selectedItems = carts.filter((item) =>
-      selectedIds.includes(Number(item.id))
+      selectedIds.includes(Number(item.id)),
     );
 
     dispatch(setCheckoutItems(selectedItems)); // simpan di redux
@@ -160,7 +173,7 @@ export default function CartPage() {
                   className="h-5 w-5 border-foreground"
                 />
                 <span className="font-medium text-foreground">
-                  SELECT ALL ({carts.length})
+                  SELECT ALL ({selectedItems.length})
                 </span>
               </div>
 
@@ -185,8 +198,8 @@ export default function CartPage() {
                       <div className="relative w-24 h-24 bg-muted rounded-lg overflow-hidden">
                         <Image
                           fill
-                          src={item.product.images![0].image_url || ""}
-                          alt={item.product.name}
+                          src={item.image_url || ""}
+                          alt={item.product_name}
                           className="object-cover"
                         />
                       </div>
@@ -194,7 +207,7 @@ export default function CartPage() {
                       <div className="flex-1">
                         <div className="flex justify-between items-start mb-2">
                           <h3 className="font-bold text-foreground text-lg">
-                            {item.product.name}
+                            {item.product_name}
                           </h3>
                           <Button
                             variant="ghost"
@@ -207,14 +220,13 @@ export default function CartPage() {
                         </div>
 
                         <div className="flex gap-4 mb-4">
-                          {item.cartVariant?.map((variant, index) => (
+                          {item.combinations?.map((combination, index) => (
                             <Badge
                               key={index}
                               variant="outline"
                               className="font-medium"
                             >
-                              {variant.variantValue.variantType.name}:{" "}
-                              {variant.variantValue.value}
+                              {combination.variant_value_name}
                             </Badge>
                           ))}
                         </div>
@@ -225,30 +237,28 @@ export default function CartPage() {
                               variant="outline"
                               size="sm"
                               onClick={() =>
-                                updateQuantity(
-                                  Number(item.id),
-                                  item.quantity - 1
-                                )
+                                updateQuantity(Number(item.id), item.qty - 1)
                               }
                               className="h-8 w-8 p-0 border-2"
-                              disabled={item.quantity <= 1}
+                              disabled={item.qty <= 1}
                             >
                               <Minus className="h-3 w-3" />
                             </Button>
                             <span className="font-bold text-foreground min-w-8 text-center">
-                              {item.quantity}
+                              {item.qty}
                             </span>
                             <Button
                               variant="outline"
                               size="sm"
                               onClick={() =>
-                                updateQuantity(
-                                  Number(item.id),
-                                  item.quantity + 1
-                                )
+                                updateQuantity(Number(item.id), item.qty + 1)
                               }
                               className="h-8 w-8 p-0 border-2"
-                              disabled={updating === Number(item.id)}
+                              disabled={
+                                updating === Number(item.id) ||
+                                (!item.allow_negative_stock &&
+                                  item.qty >= (item.variant_stock ?? 0))
+                              }
                             >
                               <Plus className="h-3 w-3" />
                             </Button>
@@ -256,10 +266,10 @@ export default function CartPage() {
 
                           <div className="text-right">
                             <p className="font-bold text-lg text-foreground">
-                              {formatPrice(item.product.price! * item.quantity)}
+                              {formatPrice(item.variant_price * item.qty)}
                             </p>
                             <p className="text-sm text-muted-foreground">
-                              {formatPrice(item.product.price!)} each
+                              {formatPrice(item.variant_price)} each
                             </p>
                           </div>
                         </div>
@@ -302,7 +312,7 @@ export default function CartPage() {
                 <Button
                   size="lg"
                   className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold mb-4"
-                  disabled={selectedCarts.length === 0}
+                  disabled={!canCheckout || selectedCarts.length === 0}
                   onClick={() => handleCheckout(selectedCarts)}
                 >
                   PROCEED TO CHECKOUT

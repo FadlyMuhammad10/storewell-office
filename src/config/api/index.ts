@@ -37,7 +37,7 @@ instance.interceptors.request.use(
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 );
 
 // --- Tambahkan interceptor global (response) ---
@@ -69,7 +69,7 @@ instance.interceptors.response.use(
         const res = await axios.post(
           `${process.env.NEXT_PUBLIC_API}/refresh-token`,
           { refreshToken },
-          { withCredentials: true } // <== tambahkan ini
+          { withCredentials: true }, // <== tambahkan ini
         );
 
         const newAccessToken = res.data.data.accessToken;
@@ -84,7 +84,7 @@ instance.interceptors.response.use(
             refreshToken,
             user: store.getState().auth.user,
             isLogin: true,
-          })
+          }),
         );
 
         onTokenRefreshed(newAccessToken);
@@ -104,7 +104,7 @@ instance.interceptors.response.use(
     }
 
     return Promise.reject(error);
-  }
+  },
 );
 
 export default async function CallAPI({
@@ -113,6 +113,7 @@ export default async function CallAPI({
   data,
   headers,
   serverToken,
+  params,
 }: CallAPIProps) {
   try {
     const finalHeaders = { ...headers };
@@ -126,6 +127,7 @@ export default async function CallAPI({
       url,
       method,
       data,
+      params,
       headers: finalHeaders,
     });
 

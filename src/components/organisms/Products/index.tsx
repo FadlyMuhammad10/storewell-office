@@ -12,7 +12,10 @@ import { useCallback, useEffect, useState } from "react";
 export default function ProductsSection() {
   const [products, setProducts] = useState([]);
   const getProducts = useCallback(async () => {
-    const data = await GetProducts();
+    const data = await GetProducts({
+      page: 1,
+      per_page: 5,
+    });
 
     setProducts(data.data);
   }, []);
@@ -74,7 +77,7 @@ export default function ProductsSection() {
                   <Image
                     width={500}
                     height={288}
-                    src={product.images?.[0]?.image_url || "/placeholder.svg"}
+                    src={product.images?.[0]?.image_url || "/default-image.png"}
                     alt={product.name}
                     className="w-full h-72 object-cover group-hover:scale-110 transition-transform duration-500"
                   />
@@ -97,7 +100,7 @@ export default function ProductsSection() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <span className="font-black text-xl text-primary">
-                        {formatPrice(product.price!)}
+                        {formatPrice(product.base_price)}
                       </span>
                     </div>
                     <Button

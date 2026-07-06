@@ -15,7 +15,7 @@ function getStatusColor(status: string) {
   switch (status) {
     case "pending":
       return "bg-yellow-100 text-yellow-800";
-    case "settlement":
+    case "success":
       return "bg-blue-100 text-blue-800";
     case "processing":
       return "bg-purple-100 text-purple-800";
@@ -32,7 +32,7 @@ function getStatusLabel(status: string) {
   switch (status) {
     case "pending":
       return "Menunggu Pembayaran";
-    case "settlement":
+    case "success":
       return "Dibayar";
     case "processing":
       return "Diproses";
@@ -60,7 +60,7 @@ export default function OrderPage() {
   }, [getOrdersData]);
   return (
     <main className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-12">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="space-y-8">
           <div className="space-y-2">
             <h1 className="text-4xl font-black text-foreground">
@@ -99,7 +99,7 @@ export default function OrderPage() {
                         Nomor Pesanan
                       </p>
                       <p className="text-lg font-bold text-foreground">
-                        {order.order_id}
+                        {order.order_code}
                       </p>
                     </div>
                     <div>
@@ -115,7 +115,7 @@ export default function OrderPage() {
                         Total
                       </p>
                       <p className="text-lg font-bold text-foreground">
-                        {formatPrice(order.total_amount)}
+                        {formatPrice(order.final_amount)}
                       </p>
                     </div>
                     <div>
@@ -124,7 +124,7 @@ export default function OrderPage() {
                       </p>
                       <Badge
                         className={`mt-1 ${getStatusColor(
-                          order.status
+                          order.status,
                         )} border-0`}
                       >
                         {getStatusLabel(order.status)}
@@ -132,7 +132,7 @@ export default function OrderPage() {
                     </div>
                     <div className="flex items-end">
                       <Link
-                        href={`/orders/${order.order_id}`}
+                        href={`/orders/${order.order_code}`}
                         className="w-full"
                       >
                         <Button

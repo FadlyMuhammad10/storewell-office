@@ -1,24 +1,51 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { formatPrice } from "@/lib/utils";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import { formatPrice, getPaginationRange } from "@/lib/utils";
 import { GetCategories, GetProducts } from "@/services/participant";
-import { categoryType, productType } from "@/types";
+import { categoryType } from "@/types";
+import { Product } from "@/types/interface";
 import { ArrowLeft, Heart, ShoppingCart } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 export default function ProductsPage() {
-  const [productsData, setProductsData] = useState([]);
+  const [page, setPage] = useState(1);
+  const [totalPage, setTotalPage] = useState(1);
+  const [totalDataPage, setTotalDataPage] = useState(0);
+  const [productsData, setProductsData] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState("ALL");
   const [categoriesData, setCategoriesData] = useState<categoryType[]>();
 
   const getProducts = useCallback(async () => {
-    const data = await GetProducts();
+    setLoading(true);
+    try {
+      const data = await GetProducts({
+        page,
+        per_page: 10,
+        category_id: Number(selectedCategory) || undefined,
+      });
 
-    setProductsData(data.data);
-  }, []);
+      setLoading(false);
+      setProductsData(data.data);
+      setTotalPage(data?.meta.last_page);
+      setTotalDataPage(data.meta.total);
+    } catch (error) {
+      console.log("error fetching categories", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [page, selectedCategory]);
 
   const getCategories = useCallback(async () => {
     const data = await GetCategories();
@@ -31,15 +58,7 @@ export default function ProductsPage() {
     getCategories();
   }, [getProducts, getCategories]);
 
-  const filteredProducts = useMemo(() => {
-    let products: productType[] = [...productsData];
-
-    if (selectedCategory !== "ALL") {
-      products = products.filter((p) => p.category?.name === selectedCategory);
-    }
-
-    return products;
-  }, [selectedCategory, productsData]);
+  const pages = getPaginationRange(page, totalPage, 1);
 
   return (
     <main className="min-h-screen bg-background">
@@ -94,9 +113,11 @@ export default function ProductsPage() {
                   {categoriesData?.map((category, i) => (
                     <button
                       key={i}
-                      onClick={() => setSelectedCategory(category.name)}
+                      onClick={() =>
+                        setSelectedCategory(category.id.toString())
+                      }
                       className={`w-full text-left px-4 py-2 rounded-lg font-medium text-sm uppercase tracking-wide transition-all ${
-                        selectedCategory === category.name
+                        selectedCategory === category.id.toString()
                           ? "bg-accent text-accent-foreground border-2 border-accent"
                           : "border-2 border-primary/20 hover:border-accent text-foreground"
                       }`}
@@ -112,13 +133,13 @@ export default function ProductsPage() {
           {/* Products Grid */}
           <div className="lg:col-span-3">
             <div className="mb-6 text-sm text-muted-foreground font-medium">
-              Showing {filteredProducts.length} product
-              {filteredProducts.length !== 1 ? "s" : ""}
+              Showing {totalDataPage} product
+              {productsData.length !== 1 ? "s" : ""}
             </div>
 
-            {filteredProducts.length > 0 ? (
+            {productsData.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredProducts.map((product) => (
+                {productsData.map((product) => (
                   <Link
                     href={`/products/${product.id}`}
                     className="block"
@@ -130,7 +151,8 @@ export default function ProductsPage() {
                           width={500}
                           height={500}
                           src={
-                            product.images?.[0]?.image_url || "/placeholder.svg"
+                            product.images?.[0]?.image_url ||
+                            "/default-image.png"
                           }
                           alt={product.name}
                           className="w-full h-72 object-cover group-hover:scale-110 transition-transform duration-500"
@@ -157,7 +179,7 @@ export default function ProductsPage() {
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
                             <span className="font-black text-xl text-primary">
-                              {formatPrice(product.price!)}
+                              {formatPrice(product.base_price!)}
                             </span>
                           </div>
                           <Button
@@ -179,6 +201,54 @@ export default function ProductsPage() {
                 </p>
               </div>
             )}
+
+            <div className="mt-4">
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      onClick={() => setPage(page - 1)}
+                      className={
+                        loading || page <= 1
+                          ? "pointer-events-none opacity-50"
+                          : "cursor-pointer"
+                      }
+                    />
+                  </PaginationItem>
+
+                  {pages.map((p, index) => (
+                    <PaginationItem key={index}>
+                      {p === "..." ? (
+                        <span className="px-3 text-muted-foreground">…</span>
+                      ) : (
+                        <PaginationLink
+                          isActive={p === page}
+                          onClick={() => setPage(p)}
+                          className={
+                            loading
+                              ? "pointer-events-none opacity-50"
+                              : "cursor-pointer"
+                          }
+                        >
+                          {p}
+                        </PaginationLink>
+                      )}
+                    </PaginationItem>
+                  ))}
+
+                  <PaginationItem>
+                    <PaginationNext
+                      onClick={() => setPage(page + 1)}
+                      className={
+                        loading || page >= totalPage
+                          ? "pointer-events-none opacity-50"
+                          : "cursor-pointer"
+                      }
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
           </div>
         </div>
       </div>

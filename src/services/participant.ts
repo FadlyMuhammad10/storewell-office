@@ -1,6 +1,7 @@
 import CallAPI from "@/config/api";
 import { addCartSchema } from "@/lib/schema";
-import { CheckoutRequest, CostPayload } from "@/types";
+import { CheckoutRequest, CostPayload, CreatePaymentRequest } from "@/types";
+import { queryParamsProduct } from "@/types/interface";
 import z from "zod";
 
 export async function GetCategories() {
@@ -9,10 +10,10 @@ export async function GetCategories() {
   return CallAPI({ url, method: "GET" });
 }
 
-export async function GetProducts() {
+export async function GetProducts(params: queryParamsProduct) {
   const url = `/participant/products`;
 
-  return CallAPI({ url, method: "GET" });
+  return CallAPI({ url, method: "GET", params });
 }
 
 export async function GetProductDetail(id: string) {
@@ -23,7 +24,7 @@ export async function GetProductDetail(id: string) {
 
 export async function addCart(
   data: z.infer<typeof addCartSchema>,
-  token: string
+  token: string,
 ) {
   const url = `/participant/cart`;
 
@@ -86,6 +87,11 @@ export async function postCheckout(data: CheckoutRequest, token: string) {
 
   return CallAPI({ url, method: "POST", data, serverToken: token });
 }
+export async function postPayment(data: CreatePaymentRequest, token: string) {
+  const url = `/participant/payment/create`;
+
+  return CallAPI({ url, method: "POST", data, serverToken: token });
+}
 
 export async function getOrders(token: string) {
   const url = `/participant/orders`;
@@ -97,10 +103,4 @@ export async function detailOrder(id: string, token: string) {
   const url = `/participant/order/detail/${id}`;
 
   return CallAPI({ url, method: "GET", serverToken: token });
-}
-
-export async function payAgain(id: string, token: string) {
-  const url = `/participant/order/${id}/pay-again`;
-
-  return CallAPI({ url, method: "POST", serverToken: token });
 }
