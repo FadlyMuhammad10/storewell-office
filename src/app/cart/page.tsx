@@ -14,7 +14,7 @@ import {
   updateCart,
 } from "@/services/participant";
 import { CartItem } from "@/types/interface";
-import { ArrowLeft, Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
+import { AlertCircle, ArrowLeft, Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -63,6 +63,11 @@ export default function CartPage() {
   };
 
   const handleSelect = (cartId: number) => {
+    const cart = carts.find(c => c.id === cartId);
+
+    if (!cart?.can_purchase) {
+      return;
+    }
     setSelectedCarts(
       (prev) =>
         prev.includes(cartId)
@@ -71,11 +76,16 @@ export default function CartPage() {
     );
   };
 
+  const purchasableCartIds = carts
+    .filter((c) => c.can_purchase)
+    .map((c) => Number(c.id));
+
   const handleSelectAll = () => {
     if (selectedCarts.length === carts.length) {
       setSelectedCarts([]); // Unselect all
     } else {
-      setSelectedCarts(carts.map((c) => Number(c.id))); // Select all
+      // setSelectedCarts(carts.map((c) => Number(c.id))); // Select all
+      setSelectedCarts(purchasableCartIds);
     }
   };
 
@@ -177,14 +187,18 @@ export default function CartPage() {
                 </span>
               </div>
 
+              
+
               <div className="space-y-4">
                 {carts.map((item) => (
                   <Card
                     key={`${item.id}`}
                     className={`p-6 border-2 transition-colors duration-200 ease-in-out ${
-                      selectedCarts.includes(Number(item.id))
-                        ? "border-border"
-                        : "border-primary bg-primary/5"
+                      !item.can_purchase
+                        ? "border-destructive/30 bg-destructive/5"
+                        : selectedCarts.includes(Number(item.id))
+                          ? "border-border"
+                          : "border-primary bg-primary/5"
                     }`}
                   >
                     <div className="flex gap-4">
@@ -193,22 +207,35 @@ export default function CartPage() {
                           checked={selectedCarts.includes(Number(item.id))}
                           onCheckedChange={() => handleSelect(Number(item.id))}
                           className="h-5 w-5 border-foreground"
+                          disabled={!item.can_purchase}
                         />
                       </div>
                       <div className="relative w-24 h-24 bg-muted rounded-lg overflow-hidden">
                         <Image
                           fill
-                          src={item.image_url || ""}
+                          src={item.image_url || "/default-image.png"}
                           alt={item.product_name}
                           className="object-cover"
                         />
                       </div>
 
                       <div className="flex-1">
-                        <div className="flex justify-between items-start mb-2">
-                          <h3 className="font-bold text-foreground text-lg">
-                            {item.product_name}
-                          </h3>
+                        <div className="flex justify-between items-start mb-2 gap-3">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h3 className="font-bold text-foreground text-lg">
+                                {item.product_name}
+                              </h3>
+                            </div>
+                            {!item.can_purchase && (
+                              <div className="mt-2 flex items-start gap-2 text-sm text-destructive">
+                                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                                <span>
+                                  {item.unavailable_reason || "This item cannot be purchased right now."}
+                                </span>
+                              </div>
+                            )}
+                          </div>
                           <Button
                             variant="ghost"
                             size="sm"
@@ -240,7 +267,7 @@ export default function CartPage() {
                                 updateQuantity(Number(item.id), item.qty - 1)
                               }
                               className="h-8 w-8 p-0 border-2"
-                              disabled={item.qty <= 1}
+                              disabled={item.qty <= 1 || !item.can_purchase}
                             >
                               <Minus className="h-3 w-3" />
                             </Button>
@@ -256,6 +283,7 @@ export default function CartPage() {
                               className="h-8 w-8 p-0 border-2"
                               disabled={
                                 updating === Number(item.id) ||
+                                !item.can_purchase ||
                                 (!item.allow_negative_stock &&
                                   item.qty >= (item.variant_stock ?? 0))
                               }

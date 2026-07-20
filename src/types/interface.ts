@@ -8,6 +8,8 @@ export interface CartItem {
   image_url: string;
   variant_stock: number;
   allow_negative_stock: boolean;
+  can_purchase?: boolean;
+  unavailable_reason?: string | null;
   combinations: [
     {
       product_variant_option_value_id: number;
