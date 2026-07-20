@@ -106,6 +106,7 @@ export interface ProductDetail {
       stock: number;
       is_visible: boolean;
       option_value_ids: number[];
+      can_purchase?: boolean;
     },
   ];
 }

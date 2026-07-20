@@ -122,8 +122,6 @@ export default function ProductDetailPage() {
     return matchingCombination || null;
   };
 
-  console.log("getProductVariantInfo", getProductVariantInfo());
-
   // Get total stock atau stock yang sesuai dengan variant
   const getTotalStock = () => {
     if (!product?.combinations) {
@@ -156,6 +154,15 @@ export default function ProductDetailPage() {
 
   const selectStock = getTotalStock();
   const selectPrice = getPriceVariant();
+
+  const getCanPurchaseVariant = () => {
+    if (!product?.combinations) {
+      return 0;
+    }
+
+    return getProductVariantInfo()?.can_purchase
+  }
+
 
   // Check apakah semua variants sudah dipilih atau allow_negative_stock true
   const areAllVariantsSelected = () => {
@@ -391,7 +398,7 @@ export default function ProductDetailPage() {
               <div className="flex gap-4">
                 <Button
                   size="lg"
-                  disabled={!isVariantSelectionComplete}
+                  disabled={!isVariantSelectionComplete || getCanPurchaseVariant() === false }
                   onClick={handleToAddToCart}
                   className={`flex-1 h-14 text-lg font-bold uppercase tracking-wide transition-all ${
                     isAddedToCart
