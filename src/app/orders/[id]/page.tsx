@@ -3,77 +3,23 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, getStatusLabel } from "@/lib/utils";
 import { RootState } from "@/redux/store";
 import { detailOrder, postPayment } from "@/services/participant";
-import { OrderItem } from "@/types/interface";
+import { ShowOrderDetailResponse } from "@/types/interface";
 import {
   ArrowLeft,
   CheckCircle2,
   Clock,
   Home,
-  MapPin,
   Package,
-  Phone,
   Truck,
-  User,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import React, { useCallback, useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-
-function getStatusColor(status: string) {
-  switch (status) {
-    case "pending":
-      return "bg-yellow-100 text-yellow-800";
-    case "success":
-      return "bg-blue-100 text-blue-800";
-    case "processing":
-      return "bg-purple-100 text-purple-800";
-    case "shipped":
-      return "bg-cyan-100 text-cyan-800";
-    case "delivered":
-      return "bg-green-100 text-green-800";
-    default:
-      return "bg-gray-100 text-gray-800";
-  }
-}
-
-function getStatusLabel(status: string) {
-  switch (status) {
-    case "pending":
-      return "Menunggu Pembayaran";
-    case "success":
-      return "Dibayar";
-    case "processing":
-      return "Diproses";
-    case "shipped":
-      return "Dikirim";
-    case "delivered":
-      return "Terima";
-    default:
-      return status;
-  }
-}
-
-function getStatusIcon(status: string) {
-  switch (status) {
-    case "pending":
-      return <Clock className="h-5 w-5 text-primary" />;
-    case "success":
-      return <CheckCircle2 className="h-5 w-5 text-primary" />;
-    case "process":
-      return <Package className="h-5 w-5 text-primary" />;
-    case "shipped":
-      return <Truck className="h-5 w-5 text-primary" />;
-    case "delivered":
-      return <Home className="h-5 w-5 text-primary" />;
-    default:
-      return null;
-  }
-}
 
 const statusSteps = [
   {
@@ -107,7 +53,7 @@ export default function OrderDetail() {
   const token = useSelector((state: RootState) => state.auth.token);
   const params = useParams();
   const id = params.id as string;
-  const [order, setOrder] = useState<OrderItem>();
+  const [order, setOrder] = useState<ShowOrderDetailResponse>();
 
   const getOrderData = useCallback(async () => {
     const data = await detailOrder(id, token!);
@@ -125,7 +71,8 @@ export default function OrderDetail() {
   );
 
   const currentStatusIndex = statusSteps.findIndex(
-    (step) => step.key === order?.process_status,
+    (step) =>
+      step.key === order?.process_status || order?.process_status === "new",
   );
 
   const handlePay = () => {
@@ -160,13 +107,13 @@ export default function OrderDetail() {
 
   if (!order) {
     return (
-      <div className="min-h-screen bg-background">
-        <main className="container mx-auto px-4 py-12">
+      <div className="min-h-screen">
+        <main className="page-container py-16">
           <Card className="p-12 border-2 border-border text-center">
             <h1 className="text-2xl font-bold text-foreground mb-4">
               Pesanan Tidak Ditemukan
             </h1>
-            <Link href="/orders">
+            <Link href="/dashboard/orders">
               <Button className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold">
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Kembali ke Pesanan
@@ -178,359 +125,266 @@ export default function OrderDetail() {
     );
   }
   return (
-    <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
-      <div className="space-y-6">
-        <div>
-          <Link href="/orders">
-            <Button
-              variant="ghost"
-              className="text-primary hover:bg-primary/10 font-bold"
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Kembali
-            </Button>
-          </Link>
+    <main className="page-container py-16 space-y-10 tracking-wide">
+      <div className="flex flex-row justify-between">
+        <div className="space-y-2">
+          <p className="text-xs text-primary-foreground font-medium">
+            ORDER HISTORY / DETAILS
+          </p>
+          <h1 className="text-3xl font-medium text-primary ">
+            Order #{order.order_code}
+          </h1>
         </div>
-
-        <Card className="p-6 border-2 border-border">
-          <div className="grid gap-6 md:grid-cols-4">
-            <div>
-              <p className="text-sm text-muted-foreground font-semibold uppercase">
-                Nomor Pesanan
-              </p>
-              <p className="text-lg font-bold text-foreground">
-                {order.order_code}
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground font-semibold uppercase">
-                Tanggal Pesanan
-              </p>
-              <p className="text-sm text-foreground">{order.order_date}</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground font-semibold uppercase">
-                Status Pembayaran
-              </p>
-              <Badge
-                className={`mt-1 ${getStatusColor(order.status)} border-0`}
-              >
-                {getStatusLabel(order.status)}
-              </Badge>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground font-semibold uppercase">
-                Total
-              </p>
-              <p className="text-sm font-semibold text-primary">
-                {formatPrice(order.final_amount)}
-              </p>
-            </div>
-          </div>
-        </Card>
-
         {order.status === "pending" && (
-          <Card className="p-6 border-2 border-orange-300 bg-orange-50">
-            <div className="space-y-4">
-              {/* Header */}
-              <div className="flex items-start gap-3">
-                <div className="text-3xl shrink-0">⏱️</div>
-                <div>
-                  <h3 className="font-bold text-lg text-foreground">
-                    Selesaikan Pembayaran
-                  </h3>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Pesanan Anda sudah dikonfirmasi dan sedang menunggu
-                    pembayaran
-                  </p>
-                </div>
-              </div>
-
-              {/* Alert */}
-              {/* <Alert className="border-orange-300 bg-white">
-                <AlertTriangle className="h-4 w-4 text-orange-600" />
-                <AlertDescription className="text-orange-900">
-                  Pesanan akan otomatis dibatalkan jika pembayaran tidak
-                  diselesaikan dalam 24 jam
-                </AlertDescription>
-              </Alert> */}
-
-              {/* Payment Amount */}
-              <div className="bg-white rounded-lg p-4 border border-orange-200">
-                <p className="text-sm text-muted-foreground font-semibold mb-1">
-                  Jumlah Pembayaran
-                </p>
-                <p className="text-3xl font-bold text-primary">
-                  {formatPrice(order.final_amount)}
-                </p>
-              </div>
-
-              {/* Countdown */}
-              <div className="bg-white rounded-lg p-4 border border-orange-200">
-                <div className="flex items-center gap-2 mb-2">
-                  <Clock className="h-4 w-4 text-orange-600" />
-                  <p className="text-sm font-semibold text-orange-900">
-                    Sisa Waktu Pembayaran
-                  </p>
-                </div>
-                {/* <PaymentCountdown expiresAt={paymentExpiredAt} /> */}
-              </div>
-
-              {/* Action Buttons */}
-              <div className="space-y-3 pt-2">
-                <Link href="" className="block">
-                  <Button
-                    onClick={handlePay}
-                    className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-bold text-base h-12"
-                  >
-                    💳 Bayar Sekarang
-                  </Button>
-                </Link>
-              </div>
-
-              {/* Info */}
-              <p className="text-xs text-muted-foreground text-center pt-2">
-                Data pesanan Anda aman. Anda dapat melanjutkan pembayaran kapan
-                saja tanpa perlu membuat pesanan baru.
+          <Card className="bg-[#F5F3F3] border border-[#C4C7C7] p-6 h-fit text-center shadow-none">
+            <div className="space-y-1">
+              <p className="text-xs font-normal">PAYMENT DEADLINE</p>
+              <p className="text-lg font-normal text-primary">
+                Payment within{" "}
+                {new Date(order.expiry_at).toLocaleString("en-ID", {
+                  dateStyle: "medium",
+                  timeStyle: "short",
+                })}
               </p>
             </div>
           </Card>
         )}
+      </div>
+      {order.status !== "expired" && (
+        <div className="flex items-start">
+          {statusSteps.map((step, index) => {
+            const Icon = step.icon;
 
-        <Card className="p-6 border-2 border-border">
-          <div className="flex items-center gap-2 mb-6">
-            <Clock className="h-5 w-5 text-primary" />
-            <h2 className="text-xl font-bold text-foreground">
-              Status Pengiriman
-            </h2>
-          </div>
-          {/* Status Content */}
-          <div className="flex items-start">
-            {statusSteps.map((step, index) => {
-              const Icon = step.icon;
+            const isCompleted = index <= currentStatusIndex;
+            const isLast = index === statusSteps.length - 1;
 
-              const isCompleted = index <= currentStatusIndex;
-              const isLast = index === statusSteps.length - 1;
-
-              return (
-                <React.Fragment key={step.key}>
-                  <div className="flex flex-col items-center flex-1">
-                    <div
-                      className={`
+            return (
+              <React.Fragment key={step.key}>
+                <div className="flex flex-col items-center flex-1">
+                  <div
+                    className={`
                   w-10 h-10 rounded-full flex items-center justify-center
                   ${
                     isCompleted
-                      ? "bg-primary text-primary-foreground"
+                      ? "bg-primary text-white"
                       : "bg-gray-200 text-muted-foreground"
                   }
                 `}
-                    >
-                      <Icon className="h-5 w-5" />
-                    </div>
-
-                    <span
-                      className={`
-                  mt-2 text-xs text-center
-                  ${
-                    isCompleted
-                      ? "text-foreground font-medium"
-                      : "text-muted-foreground"
-                  }
-                `}
-                    >
-                      {step.label}
-                    </span>
+                  >
+                    <Icon className="h-4 w-4" />
                   </div>
 
-                  {!isLast && (
-                    <div
-                      className={`
+                  <span
+                    className={`
+                  mt-2 text-xs text-center text-primary font-medium uppercase
+                  ${isCompleted ? "text-foreground" : ""}
+                `}
+                  >
+                    {step.label}
+                  </span>
+                </div>
+
+                {!isLast && (
+                  <div
+                    className={`
                   flex-1 h-1 mt-5 mx-2 rounded-full
                   ${index < currentStatusIndex ? "bg-primary" : "bg-gray-200"}
                 `}
-                    />
-                  )}
-                </React.Fragment>
-              );
-            })}
-          </div>
-        </Card>
-
-        <div className="grid gap-6 lg:gap-8 lg:grid-cols-3">
-          {/* Order Items */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Items List */}
-            <Card className="p-6 border-2 border-border">
-              <div className="flex items-center gap-2 mb-6">
-                <Package className="h-5 w-5 text-primary" />
-                <h2 className="text-xl font-bold text-foreground">
-                  Item Pesanan
-                </h2>
-                <span className="ml-auto text-sm text-primary-foreground bg-primary px-3 py-1 rounded-full">
-                  {order.details.length} item
-                </span>
-              </div>
-              <div className="space-y-4">
-                {order?.details?.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex gap-4 pb-4 border-b border-border last:border-0"
-                  >
-                    <Image
-                      src={item.image_url || "/file.svg"}
-                      alt={item.product_name}
-                      width={64}
-                      height={64}
-                      className="w-16 h-16 object-cover rounded-lg"
-                    />
-                    <div className="flex-1">
-                      <p className="font-bold text-foreground">
-                        {item.product_name}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Qty: {item.qty}
-                      </p>
-                      <p className="text-sm font-semibold text-primary">
-                        {formatPrice(item.price)}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-bold text-foreground">
-                        {formatPrice(item.price * item.qty)}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Card>
-
-            {/* Shipping Info */}
-            <Card className="p-6 border-2 border-border">
-              <div className="flex items-center gap-2 mb-6">
-                <Truck className="h-5 w-5 text-primary" />
-                <h2 className="text-xl font-bold text-foreground">
-                  Informasi Pengiriman
-                </h2>
-              </div>
-              <div className="space-y-6">
-                {/* Recipient */}
-                <div className="flex items-start gap-3">
-                  <User className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-                  <div>
-                    <p className="text-sm text-muted-foreground font-semibold mb-1">
-                      Penerima
-                    </p>
-                    <p className="text-foreground font-medium">
-                      {order.full_name}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Phone */}
-                <div className="flex items-start gap-3">
-                  <Phone className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-                  <div>
-                    <p className="text-sm text-muted-foreground font-semibold mb-1">
-                      Nomor Telepon
-                    </p>
-                    <p className="text-foreground font-medium">
-                      {order.phone_number}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Address */}
-                <div className="flex items-start gap-3">
-                  <MapPin className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-                  <div>
-                    <p className="text-sm text-muted-foreground font-semibold mb-1">
-                      Alamat Lengkap
-                    </p>
-                    <p className="text-foreground">{order.address}</p>
-                  </div>
-                </div>
-
-                {/* Shipping Details */}
-                {order.status !== "pending_payment" && (
-                  <div className="pt-4 border-t border-border space-y-4">
-                    <div>
-                      <p className="text-sm text-muted-foreground font-semibold mb-1">
-                        Kurir Pengiriman
-                      </p>
-                      <p className="text-foreground capitalize">JNE / OKE</p>
-                    </div>
-
-                    <div>
-                      <p className="text-sm text-muted-foreground font-semibold mb-1">
-                        Nomor Resi
-                      </p>
-                      <p className="text-foreground font-mono">-</p>
-                    </div>
-                  </div>
+                  />
                 )}
-              </div>
-            </Card>
+              </React.Fragment>
+            );
+          })}
+        </div>
+      )}
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="md:col-span-2">
+          <div className="space-y-6">
+            <div className="mb-8">
+              <h3 className="text-xl font-normal text-primary">
+                Items ({order.details.length})
+              </h3>
+            </div>
+            <div className="space-y-4">
+              {order.details.map((item) => (
+                <div key={item.id}>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div className="relative aspect-3/4 w-48 bg-transparent rounded-lg overflow-hidden">
+                      <Image
+                        fill
+                        src={item.image_url || "/default-image.png"}
+                        alt={item.product_name}
+                        className="object-cover"
+                      />
+                    </div>
+                    <div className="flex flex-col justify-between">
+                      <div className="flex flex-col">
+                        <h3 className="font-normal capitalize text-primary text-xl">
+                          {item.product_name}
+                        </h3>
+                        {item.variants.map((v, i) => (
+                          <div
+                            key={i}
+                            className="text-primary-foreground font-light capitalize"
+                          >
+                            <div className="inline-flex">
+                              <span>{`${v.variant_type_name}: `}</span>
+                              <span>{v.variant_value_name}</span>
+                            </div>
+                          </div>
+                        ))}
+                        <p className="text-primary-foreground font-light">
+                          Qty: {item.qty}
+                        </p>
+                      </div>
+                      <Link
+                        href={`/products/${item.product_id}`}
+                        className="text-primary text-xs uppercase underline"
+                      >
+                        View Product
+                      </Link>
+                    </div>
+                    <div className="flex h-full flex-col justify-between items-end">
+                      <div className="text-right">
+                        <p className="font-normal capitalize text-primary text-xl">
+                          {formatPrice(item.final_price * item.qty)}
+                        </p>
+                        <p className="text-xs text-primary-foreground">
+                          {formatPrice(item.final_price)} each
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="w-full border-t border-[#C4C7C7] mt-6" />
+                </div>
+              ))}
+            </div>
           </div>
-
-          {/* Summary */}
-          <Card className="p-6 border-2 border-border h-fit">
-            <h2 className="text-xl font-bold text-foreground mb-6">
-              Ringkasan Pesanan
+        </div>
+        <div className="relative mt-2">
+          <Card className="bg-[#F5F3F3] border-none shadow-sm p-6">
+            <h2 className="font-normal capitalize text-primary text-xl">
+              Summary
             </h2>
+            <div className="w-full border-t border-[#C4C7C7]" />
             <div className="space-y-4 mb-6">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Subtotal</span>
-                <span className="font-medium">
+                <span className="text-primary-foreground">Subtotal</span>
+                <span className="font-medium text-primary">
                   {formatPrice(subtotalPrice || 0)}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Pajak (0%)</span>
-                <span className="font-medium">{formatPrice(0)}</span>
+                <span className="text-primary-foreground">Shipping</span>
+                <span className=" text-sm">Calculated at checkout</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Ongkir</span>
-                <span className="font-medium">
-                  {formatPrice(order.final_amount!)}
-                </span>
+                <span className="text-primary-foreground">Tax</span>
+                <span className=" text-sm">Calculated at checkout</span>
               </div>
-              <hr className="border-border" />
+              <div className="w-full border-t border-[#C4C7C7]" />
               <div className="flex justify-between text-lg">
-                <span className="font-bold text-foreground">TOTAL</span>
-                <span className="font-bold text-primary">
+                <span className="font-semibold text-primary">TOTAL</span>
+                <span className="font-semibold text-primary">
                   {formatPrice(order.final_amount)}
                 </span>
               </div>
             </div>
-            <div className="space-y-3 pt-6 border-t border-border">
-              <div>
-                <p className="text-sm text-muted-foreground font-semibold mb-1">
-                  Nama Penerima
-                </p>
-                <p className="text-foreground">{order.full_name}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground font-semibold mb-1">
-                  Email
-                </p>
-                <p className="text-foreground">{order.email}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground font-semibold mb-1">
-                  Metode Pembayaran
-                </p>
-                <p className="text-foreground">{order.payment_type}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground font-semibold mb-1">
-                  Waktu Transaksi
-                </p>
-                <p className="text-foreground">{order.transaction_time}</p>
+
+            {order.status === "pending" && (
+              <Button
+                size="lg"
+                className="w-full bg-primary hover:bg-primary/90 text-white font-bold mb-4"
+                onClick={handlePay}
+                disabled={order.status !== "pending"}
+              >
+                COMPLETE PAYMENT
+              </Button>
+            )}
+            {order.status === "expired" && (
+              <Card className="bg-gray-200 border border-[#C4C7C7] h-fit text-center shadow-none">
+                <div className="space-y-1">
+                  <p className="text-xs font-normal">
+                    This order has expired and can no longer be paid.
+                  </p>
+                </div>
+              </Card>
+            )}
+            <div className="space-y-1">
+              <p className="text-primary-foreground text-xs font-normal">
+                SHIPPING ADDRESS
+              </p>
+              <div className="w-full border-t border-[#C4C7C7] mb-4" />
+              <p className="text-primary font-medium capitalize">
+                {order.full_name}
+              </p>
+              <p className="text-primary font-extralight capitalize">
+                {order.phone_number}
+              </p>
+              <p className="text-primary font-extralight capitalize">
+                {order.address}
+              </p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-primary-foreground text-xs font-normal">
+                DELIVERY METHOD
+              </p>
+              <div className="w-full border-t border-[#C4C7C7] mb-4" />
+              <div className="flex items-center gap-2">
+                <Truck className="h-4 w-4 text-primary" />
+                <h2 className="text-primary font-extralight capitalize">
+                  Standard Shipping (3-5 Business Days)
+                </h2>
               </div>
             </div>
           </Card>
         </div>
       </div>
+      {order.status === "pending" && (
+        <>
+          <div className="w-full border-t border-[#C4C7C7]" />
+          <div className="space-y-6">
+            <h3 className="text-xl font-normal text-primary">
+              Payment Instructions
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-3">
+              <div>
+                <div className="flex flex-col gap-2">
+                  <Badge className=" bg-transparent h-7 w-7 flex items-center justify-center p-0 text-xs border border-primary font-medium">
+                    01
+                  </Badge>
+                  <h2 className="font-light text-primary-foreground">
+                    Click the &apos;Complete Payment&apos; button to proceed to
+                    our secure Midtrans payment gateway.
+                  </h2>
+                </div>
+              </div>
+              <div>
+                <div className="flex flex-col gap-2">
+                  <Badge className=" bg-transparent h-7 w-7 flex items-center justify-center p-0 text-xs border border-primary font-medium">
+                    02
+                  </Badge>
+                  <h2 className="font-light text-primary-foreground">
+                    Select your preferred payment method (Credit Card, Virtual
+                    Account, or Bank Transfer).
+                  </h2>
+                </div>
+              </div>
+              <div>
+                <div className="flex flex-col gap-2">
+                  <Badge className=" bg-transparent h-7 w-7 flex items-center justify-center p-0 text-xs border border-primary font-medium">
+                    03
+                  </Badge>
+                  <h2 className="font-light text-primary-foreground">
+                    Once payment is confirmed, your order status will
+                    automatically update to &apos;Processing&apos;.
+                  </h2>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </main>
   );
 }

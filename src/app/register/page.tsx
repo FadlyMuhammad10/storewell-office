@@ -46,23 +46,14 @@ export default function RegisterPage() {
     }
   };
   return (
-    <section className="container mx-auto px-4 py-8">
+    <section className="mx-auto px-4 py-8 tracking-wide">
       <div className="max-w-md mx-auto">
-        {/* Back Link */}
-        <Link
-          href="/"
-          className="inline-flex items-center text-muted-foreground hover:text-foreground mb-8"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          BACK TO STORE
-        </Link>
-
-        <Card className="p-8 border-2 border-border">
+        <Card className="p-8 border-2 border-border bg-background">
           <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-full mb-4">
               <UserPlus className="h-8 w-8 text-primary" />
             </div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">
+            <h1 className="text-3xl font-bold text-muted-foreground mb-2">
               JOIN THE CREW
             </h1>
             <p className="text-muted-foreground">
@@ -75,9 +66,9 @@ export default function RegisterPage() {
               <div className="space-y-2">
                 <Label
                   htmlFor="firstName"
-                  className="text-sm font-bold text-foreground"
+                  className="text-sm font-bold text-muted-foreground"
                 >
-                  FIRST NAME
+                  FIRST NAME*
                 </Label>
                 <Input
                   id="firstName"
@@ -91,9 +82,9 @@ export default function RegisterPage() {
               <div className="space-y-2">
                 <Label
                   htmlFor="lastName"
-                  className="text-sm font-bold text-foreground"
+                  className="text-sm font-bold text-muted-foreground"
                 >
-                  LAST NAME
+                  LAST NAME*
                 </Label>
                 <Input
                   id="lastName"
@@ -109,9 +100,9 @@ export default function RegisterPage() {
             <div className="space-y-2">
               <Label
                 htmlFor="email"
-                className="text-sm font-bold text-foreground"
+                className="text-sm font-bold text-muted-foreground"
               >
-                EMAIL ADDRESS
+                EMAIL ADDRESS*
               </Label>
               <Input
                 id="email"
@@ -126,9 +117,9 @@ export default function RegisterPage() {
             <div className="space-y-2">
               <Label
                 htmlFor="password"
-                className="text-sm font-bold text-foreground"
+                className="text-sm font-bold text-muted-foreground"
               >
-                PASSWORD
+                PASSWORD*
               </Label>
               <div className="relative">
                 <Input
@@ -158,9 +149,9 @@ export default function RegisterPage() {
             <div className="space-y-2">
               <Label
                 htmlFor="confirmPassword"
-                className="text-sm font-bold text-foreground"
+                className="text-sm font-bold text-muted-foreground"
               >
-                CONFIRM PASSWORD
+                CONFIRM PASSWORD*
               </Label>
               <div className="relative">
                 <Input
@@ -222,7 +213,7 @@ export default function RegisterPage() {
             <Button
               type="submit"
               size="lg"
-              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold"
+              className="w-full bg-primary hover:bg-primary/90 text-white font-bold"
             >
               <UserPlus className="h-4 w-4 mr-2" />
               {loading ? "CREATING ACCOUNT..." : "CREATE ACCOUNT"}
@@ -243,7 +234,7 @@ export default function RegisterPage() {
 
           <div className="mt-6 pt-6 border-t border-border">
             <div className="text-center mb-4">
-              <span className="text-sm text-muted-foreground bg-background px-4">
+              <span className="text-sm text-muted-foreground px-4">
                 OR CONTINUE WITH
               </span>
             </div>

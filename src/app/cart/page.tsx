@@ -1,5 +1,4 @@
 "use client";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -14,7 +13,7 @@ import {
   updateCart,
 } from "@/services/participant";
 import { CartItem } from "@/types/interface";
-import { AlertCircle, ArrowLeft, Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
+import { Lock, Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -63,7 +62,7 @@ export default function CartPage() {
   };
 
   const handleSelect = (cartId: number) => {
-    const cart = carts.find(c => c.id === cartId);
+    const cart = carts.find((c) => c.id === cartId);
 
     if (!cart?.can_purchase) {
       return;
@@ -126,12 +125,12 @@ export default function CartPage() {
   };
 
   return (
-    <section>
+    <section className="page-container py-16">
       {carts.length === 0 ? (
-        <div className="container mx-auto px-4 py-8">
+        <div className="relative">
           <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
             <ShoppingBag className="h-24 w-24 text-muted-foreground mb-6" />
-            <h1 className="text-3xl font-bold text-foreground mb-4">
+            <h1 className="text-3xl font-bold text-muted-foreground mb-4">
               YOUR CART IS EMPTY
             </h1>
             <p className="text-muted-foreground mb-8 max-w-md">
@@ -141,7 +140,7 @@ export default function CartPage() {
             <Link href="/">
               <Button
                 size="lg"
-                className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold"
+                className="bg-primary hover:bg-primary text-white font-bold"
               >
                 START SHOPPING
               </Button>
@@ -149,92 +148,110 @@ export default function CartPage() {
           </div>
         </div>
       ) : (
-        <main className="container mx-auto px-4 py-8">
-          {/* Header */}
-          <div className="flex items-center gap-4 mb-8">
-            <Link href="/">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-muted-foreground hover:text-foreground"
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                CONTINUE SHOPPING
-              </Button>
-            </Link>
+        <div className="tracking-wider">
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="text-3xl font-normal text-muted-foreground">
+              Your Cart
+            </h1>
           </div>
-
-          <div className="grid lg:grid-cols-3 gap-8">
+          <div className="flex items-center gap-3 mb-6">
+            <Checkbox
+              checked={selectedCarts.length === carts.length}
+              onCheckedChange={handleSelectAll}
+              className={`border border-[#C4C7C7] data-[state=checked]:bg-primary data-[state=checked]:border-none data-[state=checked]:text-white`}
+            />
+            <span className="font-medium text-xs text-primary">
+              SELECT ALL ({selectedItems.length})
+            </span>
+          </div>
+          <div className="absolute w-full border-t border-[#C4C7C7]" />
+          <div className="grid lg:grid-cols-3 gap-6">
             {/* Cart Items */}
-            <div className="lg:col-span-2">
-              <div className="flex items-center justify-between mb-6">
-                <h1 className="text-3xl font-bold text-foreground">
-                  SHOPPING CART
-                </h1>
-                <Badge variant="secondary" className="text-sm font-bold">
-                  {carts.length} ITEMS
-                </Badge>
-              </div>
-
-              <div className="flex items-center gap-3 mb-6 pb-4 border-b border-border">
-                <Checkbox
-                  checked={selectedCarts.length === carts.length}
-                  onCheckedChange={handleSelectAll}
-                  className="h-5 w-5 border-foreground"
-                />
-                <span className="font-medium text-foreground">
-                  SELECT ALL ({selectedItems.length})
-                </span>
-              </div>
-
-              
-
+            <div className="lg:col-span-2 mt-2">
               <div className="space-y-4">
                 {carts.map((item) => (
-                  <Card
-                    key={`${item.id}`}
-                    className={`p-6 border-2 transition-colors duration-200 ease-in-out ${
-                      !item.can_purchase
-                        ? "border-destructive/30 bg-destructive/5"
-                        : selectedCarts.includes(Number(item.id))
-                          ? "border-border"
-                          : "border-primary bg-primary/5"
-                    }`}
-                  >
-                    <div className="flex gap-4">
-                      <div className="flex items-start pt-1">
-                        <Checkbox
-                          checked={selectedCarts.includes(Number(item.id))}
-                          onCheckedChange={() => handleSelect(Number(item.id))}
-                          className="h-5 w-5 border-foreground"
-                          disabled={!item.can_purchase}
-                        />
-                      </div>
-                      <div className="relative w-24 h-24 bg-muted rounded-lg overflow-hidden">
-                        <Image
-                          fill
-                          src={item.image_url || "/default-image.png"}
-                          alt={item.product_name}
-                          className="object-cover"
-                        />
-                      </div>
-
-                      <div className="flex-1">
-                        <div className="flex justify-between items-start mb-2 gap-3">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <h3 className="font-bold text-foreground text-lg">
-                                {item.product_name}
-                              </h3>
-                            </div>
-                            {!item.can_purchase && (
-                              <div className="mt-2 flex items-start gap-2 text-sm text-destructive">
-                                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-                                <span>
-                                  {item.unavailable_reason || "This item cannot be purchased right now."}
+                  <div key={`${item.id}`}>
+                    <Card
+                      className={`p-6 border-none shadow-none ${
+                        !item.can_purchase
+                          ? " bg-primary-foreground/10"
+                          : selectedCarts.includes(Number(item.id))
+                            ? "bg-transparent"
+                            : "bg-transparent"
+                      }`}
+                    >
+                      <div className="grid grid-cols-1 md:grid-cols-[auto_12rem_1fr_auto] gap-8">
+                        <div className="flex justify-center items-center">
+                          <Checkbox
+                            checked={selectedCarts.includes(Number(item.id))}
+                            onCheckedChange={() =>
+                              handleSelect(Number(item.id))
+                            }
+                            disabled={!item.can_purchase}
+                            className={`border border-[#C4C7C7] data-[state=checked]:bg-primary data-[state=checked]:border-none data-[state=checked]:text-white`}
+                          />
+                        </div>
+                        <div className="relative aspect-3/4 w-48 bg-transparent rounded-lg overflow-hidden">
+                          <Image
+                            fill
+                            src={item.image_url || "/default-image.png"}
+                            alt={item.product_name}
+                            className="object-cover"
+                          />
+                        </div>
+                        <div className="flex flex-col justify-between">
+                          <div className="flex flex-col">
+                            <h3 className="font-normal capitalize text-primary text-xl">
+                              {item.product_name}
+                            </h3>
+                            <div className="flex flex-wrap gap-1 text-xs text-primary-foreground font-medium uppercase">
+                              {item.combinations?.map((combination, index) => (
+                                <span key={index} className="font-medium">
+                                  {index > 0 && " | "}
+                                  {combination.variant_value_name}
                                 </span>
-                              </div>
-                            )}
+                              ))}
+                            </div>
+                          </div>
+                          <div className="inline-flex items-center rounded-full border border-border w-fit">
+                            <button
+                              onClick={() =>
+                                updateQuantity(Number(item.id), item.qty - 1)
+                              }
+                              disabled={item.qty <= 1 || !item.can_purchase}
+                              className="flex h-10 w-10 items-center justify-center disabled:opacity-40"
+                            >
+                              <Minus className="h-4 w-4" />
+                            </button>
+
+                            <span className="min-w-10 text-center font-medium">
+                              {item.qty}
+                            </span>
+
+                            <button
+                              onClick={() =>
+                                updateQuantity(Number(item.id), item.qty + 1)
+                              }
+                              disabled={
+                                updating === Number(item.id) ||
+                                !item.can_purchase ||
+                                (!item.allow_negative_stock &&
+                                  item.qty >= (item.variant_stock ?? 0))
+                              }
+                              className="flex h-10 w-10 items-center justify-center disabled:opacity-40"
+                            >
+                              <Plus className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+                        <div className="flex h-full flex-col justify-between items-end">
+                          <div className="text-right">
+                            <p className="font-normal capitalize text-primary text-xl">
+                              {formatPrice(item.variant_price * item.qty)}
+                            </p>
+                            <p className="text-xs text-primary-foreground">
+                              {formatPrice(item.variant_price)} each
+                            </p>
                           </div>
                           <Button
                             variant="ghost"
@@ -245,93 +262,40 @@ export default function CartPage() {
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
-
-                        <div className="flex gap-4 mb-4">
-                          {item.combinations?.map((combination, index) => (
-                            <Badge
-                              key={index}
-                              variant="outline"
-                              className="font-medium"
-                            >
-                              {combination.variant_value_name}
-                            </Badge>
-                          ))}
-                        </div>
-
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() =>
-                                updateQuantity(Number(item.id), item.qty - 1)
-                              }
-                              className="h-8 w-8 p-0 border-2"
-                              disabled={item.qty <= 1 || !item.can_purchase}
-                            >
-                              <Minus className="h-3 w-3" />
-                            </Button>
-                            <span className="font-bold text-foreground min-w-8 text-center">
-                              {item.qty}
-                            </span>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() =>
-                                updateQuantity(Number(item.id), item.qty + 1)
-                              }
-                              className="h-8 w-8 p-0 border-2"
-                              disabled={
-                                updating === Number(item.id) ||
-                                !item.can_purchase ||
-                                (!item.allow_negative_stock &&
-                                  item.qty >= (item.variant_stock ?? 0))
-                              }
-                            >
-                              <Plus className="h-3 w-3" />
-                            </Button>
-                          </div>
-
-                          <div className="text-right">
-                            <p className="font-bold text-lg text-foreground">
-                              {formatPrice(item.variant_price * item.qty)}
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                              {formatPrice(item.variant_price)} each
-                            </p>
-                          </div>
-                        </div>
                       </div>
-                    </div>
-                  </Card>
+                    </Card>
+                    <div className="w-full border-t border-[#C4C7C7]" />
+                  </div>
                 ))}
               </div>
             </div>
-
-            {/* Order Summary */}
-            <div className="lg:col-span-1">
-              <Card className="p-6 border-2 border-border sticky top-4">
-                <h2 className="text-xl font-bold text-foreground mb-6">
-                  ORDER SUMMARY
+            <div className="relative mt-2">
+              <Card className="bg-transparent border-none shadow-sm sticky top-24 p-6">
+                <h2 className="font-normal capitalize text-primary text-xl">
+                  Summary
                 </h2>
-
+                <div className="w-full border-t border-[#C4C7C7]" />
                 <div className="space-y-4 mb-6">
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">
+                    <span className="text-primary-foreground">
                       Subtotal ({selectedCarts.length} items)
                     </span>
-                    <span className="font-medium">
+                    <span className="font-medium text-primary">
                       {formatPrice(getSelectedTotal())}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Tax</span>
-                    <span className="font-medium">{formatPrice(0)}</span>
+                    <span className="text-primary-foreground">Shipping</span>
+                    <span className=" text-sm">Calculated at checkout</span>
                   </div>
-                  <hr className="border-border" />
+                  <div className="flex justify-between">
+                    <span className="text-primary-foreground">Tax</span>
+                    <span className=" text-sm">Calculated at checkout</span>
+                  </div>
+                  <div className="w-full border-t border-[#C4C7C7]" />
                   <div className="flex justify-between text-lg">
-                    <span className="font-bold text-foreground">TOTAL</span>
-                    <span className="font-bold text-foreground">
+                    <span className="font-semibold text-primary">TOTAL</span>
+                    <span className="font-semibold text-primary">
                       {formatPrice(getSelectedTotal())}
                     </span>
                   </div>
@@ -339,33 +303,23 @@ export default function CartPage() {
 
                 <Button
                   size="lg"
-                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold mb-4"
+                  className="w-full bg-primary hover:bg-primary/90 text-white font-bold mb-4"
                   disabled={!canCheckout || selectedCarts.length === 0}
                   onClick={() => handleCheckout(selectedCarts)}
                 >
                   PROCEED TO CHECKOUT
                 </Button>
 
-                <div className="text-center">
-                  <p className="text-sm text-muted-foreground mb-2">
-                    Secure checkout powered by
+                <div className="text-center inline-flex items-center justify-center gap-2">
+                  <Lock className="w-4 h-4 text-primary-foreground" />
+                  <p className="text-xs uppercase text-primary-foreground">
+                    SECURE CHECKOUT GUARANTEE
                   </p>
-                  <div className="flex justify-center gap-2">
-                    <Badge variant="outline" className="text-xs">
-                      VISA
-                    </Badge>
-                    <Badge variant="outline" className="text-xs">
-                      MASTERCARD
-                    </Badge>
-                    <Badge variant="outline" className="text-xs">
-                      PAYPAL
-                    </Badge>
-                  </div>
                 </div>
               </Card>
             </div>
           </div>
-        </main>
+        </div>
       )}
     </section>
   );

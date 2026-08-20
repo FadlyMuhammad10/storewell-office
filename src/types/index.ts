@@ -51,10 +51,13 @@ export type CostPayload = {
 };
 
 export type CheckoutRequest = {
-  full_name: string;
+  email: string;
+  first_name: string;
+  last_name: string;
   phone_number: string;
   address: string;
   nominal_amount: number;
+  postal_code: string;
   final_amount: number;
   cart_items?: [
     {

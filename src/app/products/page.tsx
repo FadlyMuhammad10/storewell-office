@@ -1,6 +1,6 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import {
   Pagination,
   PaginationContent,
@@ -9,11 +9,18 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { formatPrice, getPaginationRange } from "@/lib/utils";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { cn, formatPrice, getPaginationRange } from "@/lib/utils";
 import { GetCategories, GetProducts } from "@/services/participant";
 import { categoryType } from "@/types";
 import { Product } from "@/types/interface";
-import { ArrowLeft, Heart, ShoppingCart } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Heart, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
@@ -24,8 +31,9 @@ export default function ProductsPage() {
   const [totalDataPage, setTotalDataPage] = useState(0);
   const [productsData, setProductsData] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedCategory, setSelectedCategory] = useState("ALL");
+  const [selectedCategory, setSelectedCategory] = useState("");
   const [categoriesData, setCategoriesData] = useState<categoryType[]>();
+  const [showFilters, setShowFilters] = useState(false);
 
   const getProducts = useCallback(async () => {
     setLoading(true);
@@ -61,135 +69,120 @@ export default function ProductsPage() {
   const pages = getPaginationRange(page, totalPage, 1);
 
   return (
-    <main className="min-h-screen bg-background">
-      {/* Breadcrumb */}
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="flex items-center gap-2 text-sm">
-          <Link
-            href="/"
-            className="text-muted-foreground hover:text-primary font-medium"
-          >
-            HOME
-          </Link>
-          <span className="text-muted-foreground">/</span>
-          <span className="text-primary font-bold uppercase">ALL GEAR</span>
-        </div>
-      </div>
-
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 pb-20">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-12">
-          <div>
-            <h1 className="text-4xl lg:text-5xl font-black mb-2 text-balance uppercase tracking-tight">
-              ALL GEAR
-            </h1>
-            <p className="text-muted-foreground text-lg">
-              Browse our complete collection of premium streetwear and urban
-              essentials
-            </p>
-          </div>
-          <Link href="/">
-            <Button
-              variant="outline"
-              size="sm"
-              className="border-2 border-primary/20 hover:border-accent bg-transparent"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back
-            </Button>
-          </Link>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+    <main className="min-h-screen py-16">
+      <div className="page-container">
+        <div className="flex gap-8">
           {/* Sidebar */}
-          <div className="lg:col-span-1">
-            <div className="sticky top-24 space-y-8">
-              {/* Categories */}
+          {showFilters && (
+            <div className="w-64 shrink-0 text-primary">
               <div className="space-y-4">
-                <h3 className="font-black text-lg uppercase tracking-wide">
-                  CATEGORY
-                </h3>
-                <div className="space-y-2">
-                  {categoriesData?.map((category, i) => (
-                    <button
-                      key={i}
-                      onClick={() =>
-                        setSelectedCategory(category.id.toString())
-                      }
-                      className={`w-full text-left px-4 py-2 rounded-lg font-medium text-sm uppercase tracking-wide transition-all ${
-                        selectedCategory === category.id.toString()
-                          ? "bg-accent text-accent-foreground border-2 border-accent"
-                          : "border-2 border-primary/20 hover:border-accent text-foreground"
-                      }`}
-                    >
-                      {category.name}
-                    </button>
-                  ))}
+                <div className="flex items-center justify-between">
+                  <h3 className="font-normal text-sm uppercase tracking-wide">
+                    FILTERS
+                  </h3>
+                  <button
+                    onClick={() => setShowFilters(false)}
+                    className="p-1 hover:bg-accent rounded transition"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
                 </div>
+                <Accordion type="single" collapsible className="w-full">
+                  <AccordionItem value="category">
+                    <AccordionTrigger className="text-xs font-normal uppercase text-primary">
+                      Category
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <div className="space-y-2">
+                        {categoriesData?.map((category) => (
+                          <div
+                            key={category.id}
+                            className={`flex items-center gap-3 capitalize`}
+                          >
+                            <Checkbox
+                              checked={
+                                selectedCategory === category.id.toString()
+                              }
+                              onCheckedChange={(checked) =>
+                                checked
+                                  ? setSelectedCategory(category.id.toString())
+                                  : setSelectedCategory("")
+                              }
+                              className={`border border-[#C4C7C7] data-[state=checked]:bg-blue-500 data-[state=checked]:border-none data-[state=checked]:text-white`}
+                            />
+                            <span
+                              className={`text-sm ${
+                                selectedCategory === category.id.toString()
+                                  ? "font-semibold text-primary"
+                                  : "font-normal text-[#1B1C1C]"
+                              }`}
+                            >
+                              {category.name}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Products Grid */}
-          <div className="lg:col-span-3">
-            <div className="mb-6 text-sm text-muted-foreground font-medium">
-              Showing {totalDataPage} product
-              {productsData.length !== 1 ? "s" : ""}
+          <div className="flex-1">
+            <div className="flex items-center justify-between tracking-wide">
+              <div className="mb-4 text-xs text-primary-foreground font-medium">
+                {totalDataPage} Product
+                {productsData.length !== 1 ? "s" : ""}
+              </div>
+              <div className="">
+                <p
+                  onClick={() => setShowFilters(!showFilters)}
+                  className="text-xs text-primary-foreground font-normal hover:underline hover:cursor-pointer"
+                >
+                  Filters
+                </p>
+              </div>
             </div>
+            <div className="w-full border-t border-[#C4C7C7]" />
 
             {productsData.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 tracking-wider">
                 {productsData.map((product) => (
                   <Link
                     href={`/products/${product.id}`}
                     className="block"
                     key={product.id}
                   >
-                    <Card className="group overflow-hidden border-2 border-primary/20 shadow-lg hover:shadow-2xl hover:border-accent transition-all duration-300 bg-card h-full">
-                      <div className="relative overflow-hidden">
+                    <Card className="border-0 shadow-none rounded-none bg-transparent">
+                      {/* Image */}
+                      <div className="relative overflow-hidden aspect-3/4 bg-transparent">
                         <Image
-                          width={500}
-                          height={500}
                           src={
                             product.images?.[0]?.image_url ||
                             "/default-image.png"
                           }
                           alt={product.name}
-                          className="w-full h-72 object-cover group-hover:scale-110 transition-transform duration-500"
+                          fill
+                          className="object-cover transition-transform duration-300 group-hover:scale-105"
                         />
-                        {/* <Badge className="absolute top-4 left-4 bg-accent text-accent-foreground font-black text-xs px-3 py-1 uppercase tracking-wider">
-                          {product.badge}
-                        </Badge> */}
-                        <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Button
-                            size="icon"
-                            variant="secondary"
-                            className="h-10 w-10 bg-background/90 hover:bg-accent"
-                          >
-                            <Heart className="h-5 w-5" />
-                          </Button>
+                        <div className="group absolute top-3 right-3 flex h-10 w-10 items-center justify-center rounded-full bg-red-500">
+                          <Heart className="h-4 w-4 text-white group-hover:text-primary group-hover:fill-primary" />
                         </div>
                       </div>
 
-                      <CardContent className="p-6">
-                        <h3 className="font-bold text-lg mb-4 text-balance uppercase tracking-wide group-hover:text-accent transition-colors line-clamp-2">
+                      {/* Info */}
+                      <div className="space-y-1">
+                        <h3 className=" font-normal text-primary capitalize">
                           {product.name}
                         </h3>
-
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <span className="font-black text-xl text-primary">
-                              {formatPrice(product.base_price!)}
-                            </span>
-                          </div>
-                          <Button
-                            size="lg"
-                            className="h-10 px-4 bg-accent hover:bg-accent/90 font-bold"
-                          >
-                            <ShoppingCart className="h-5 w-5" />
-                          </Button>
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-xs">
+                            {formatPrice(product.base_price!)}
+                          </span>
                         </div>
-                      </CardContent>
+                      </div>
                     </Card>
                   </Link>
                 ))}
@@ -201,8 +194,8 @@ export default function ProductsPage() {
                 </p>
               </div>
             )}
-
-            <div className="mt-4">
+            <div className="w-full border-t border-[#C4C7C7]" />
+            <div className="mt-4 text-primary">
               <Pagination>
                 <PaginationContent>
                   <PaginationItem>
@@ -224,11 +217,13 @@ export default function ProductsPage() {
                         <PaginationLink
                           isActive={p === page}
                           onClick={() => setPage(p)}
-                          className={
-                            loading
-                              ? "pointer-events-none opacity-50"
-                              : "cursor-pointer"
-                          }
+                          className={cn(
+                            "cursor-pointer text-sm transition-colors",
+                            p === page
+                              ? "text-primary font-semibold hover:bg-black"
+                              : "text-primary-foreground hover:text-white hover:bg-black",
+                            loading && "pointer-events-none opacity-50",
+                          )}
                         >
                           {p}
                         </PaginationLink>

@@ -1,7 +1,7 @@
 import CallAPI from "@/config/api";
 import { addCartSchema } from "@/lib/schema";
 import { CheckoutRequest, CostPayload, CreatePaymentRequest } from "@/types";
-import { queryParamsProduct } from "@/types/interface";
+import { queryParamsOrder, queryParamsProduct } from "@/types/interface";
 import z from "zod";
 
 export async function GetCategories() {
@@ -60,24 +60,24 @@ export async function deleteCart(id: number, token: string) {
 }
 
 export async function getProvinces(token: string) {
-  const url = `/provinces`;
+  const url = `/rajaongkir/province`;
 
   return CallAPI({ url, method: "GET", serverToken: token });
 }
 export async function getCities(provinceId: number, token: string) {
-  const url = `/cities/${provinceId}`;
+  const url = `/rajaongkir/city/${provinceId}`;
 
   return CallAPI({ url, method: "GET", serverToken: token });
 }
 
 export async function getDistricts(cityId: number, token: string) {
-  const url = `/districts/${cityId}`;
+  const url = `/rajaongkir/district/${cityId}`;
 
   return CallAPI({ url, method: "GET", serverToken: token });
 }
 
 export async function getCost(data: CostPayload, token: string) {
-  const url = `/cost`;
+  const url = `/rajaongkir/shipping-cost`;
 
   return CallAPI({ url, method: "POST", data, serverToken: token });
 }
@@ -93,10 +93,10 @@ export async function postPayment(data: CreatePaymentRequest, token: string) {
   return CallAPI({ url, method: "POST", data, serverToken: token });
 }
 
-export async function getOrders(token: string) {
+export async function getOrders(token: string, params: queryParamsOrder) {
   const url = `/participant/orders`;
 
-  return CallAPI({ url, method: "GET", serverToken: token });
+  return CallAPI({ url, method: "GET", serverToken: token, params });
 }
 
 export async function detailOrder(id: string, token: string) {

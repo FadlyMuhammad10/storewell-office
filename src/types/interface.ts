@@ -50,7 +50,37 @@ export interface CostItem {
   etd?: string;
 }
 
-export interface OrderItem {
+export interface OrderRes {
+  id: number;
+  order_code: string;
+  status: string;
+  process_status: string;
+  final_amount: number;
+  order_date: string;
+  items: Array<{
+    id: number;
+    product_name: string;
+    image_url: string | null;
+  }>;
+}
+
+export interface OrderDetailResponse {
+  id: number;
+  product_id: number;
+  product_variant_id: number | null;
+  product_name: string;
+  price: number;
+  final_price: number;
+  qty: number;
+  subtotal: number;
+  image_url: string | null;
+  variants: Array<{
+    variant_type_name: string;
+    variant_value_name: string;
+  }>;
+}
+
+export interface ShowOrderDetailResponse {
   id: number;
   order_code: string;
   status: string;
@@ -64,16 +94,8 @@ export interface OrderItem {
   phone_number: string;
   transaction_time: string;
   payment_type: string;
-  details: {
-    id: number;
-    product_id: number;
-    product_variant_id: number;
-    product_name: string;
-    price: number;
-    qty: number;
-    subtotal: number;
-    image_url: string;
-  }[];
+  expiry_at: Date;
+  details: OrderDetailResponse[];
 }
 
 export interface queryParamsProduct {
@@ -81,6 +103,12 @@ export interface queryParamsProduct {
   per_page: number;
   search?: string;
   category_id?: number;
+}
+export interface queryParamsOrder {
+  page: number;
+  per_page: number;
+  search?: string;
+  status_shipment?: string;
 }
 export interface Product {
   id: number;

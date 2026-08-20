@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { email, z } from "zod";
 
 export const signupSchema = z.object({
   firstName: z.string().min(1, "Name is required"),
@@ -15,9 +15,12 @@ export const signinSchema = z.object({
 });
 
 export const checkoutSchema = z.object({
-  full_name: z.string().min(1),
+  email: z.email().min(1),
+  first_name: z.string().min(1),
+  last_name: z.string().min(1),
   phone_number: z.string().min(1),
   address: z.string().min(1),
+  postal_code: z.string().min(1),
   nominal_amount: z.number().positive(),
   final_amount: z.number().positive(),
   cart_items: z.array(

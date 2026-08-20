@@ -1,4 +1,11 @@
 "use client";
+import ProductsSection from "@/components/organisms/Products";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { addCartSchema } from "@/lib/schema";
@@ -11,18 +18,11 @@ import {
   GetProductDetail,
 } from "@/services/participant";
 import { ProductDetail, SelectedVariants } from "@/types";
-import {
-  ArrowLeft,
-  Heart,
-  Minus,
-  Plus,
-  Share2,
-  ShoppingCart,
-} from "lucide-react";
+import { Minus, Plus } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import z from "zod";
 
@@ -46,6 +46,9 @@ export default function ProductDetailPage() {
   const login = useSelector((state: RootState) => state.auth.isLogin);
   const token = useSelector((state: RootState) => state.auth.token);
   const [isAddedToCart, setIsAddedToCart] = useState(false);
+  const resetAddedStateTimer = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
 
   const getProductDetail = useCallback(async () => {
     const data = await GetProductDetail(id);
@@ -56,6 +59,14 @@ export default function ProductDetailPage() {
   useEffect(() => {
     getProductDetail();
   }, [getProductDetail]);
+
+  useEffect(() => {
+    return () => {
+      if (resetAddedStateTimer.current) {
+        clearTimeout(resetAddedStateTimer.current);
+      }
+    };
+  }, []);
 
   const handleSelectVariant = (
     variant: { id: number; name: string },
@@ -124,7 +135,7 @@ export default function ProductDetailPage() {
 
   // Get total stock atau stock yang sesuai dengan variant
   const getTotalStock = () => {
-    if (!product?.combinations) {
+    if (!product?.combinations || selectedVariants.variants.length === 0) {
       return 0;
     }
 
@@ -138,7 +149,7 @@ export default function ProductDetailPage() {
     }
 
     // Jika sudah ada variant dipilih, ambil stock yang sesuai
-    return getProductVariantInfo()?.stock || totalStock;
+    return getProductVariantInfo()?.stock;
   };
   const getPriceVariant = () => {
     if (!product?.combinations) {
@@ -152,7 +163,7 @@ export default function ProductDetailPage() {
     return getProductVariantInfo()?.price || product.base_price;
   };
 
-  const selectStock = getTotalStock();
+  const selectStock = Number(getTotalStock() ?? 0);
   const selectPrice = getPriceVariant();
 
   const getCanPurchaseVariant = () => {
@@ -160,9 +171,8 @@ export default function ProductDetailPage() {
       return 0;
     }
 
-    return getProductVariantInfo()?.can_purchase
-  }
-
+    return getProductVariantInfo()?.can_purchase;
+  };
 
   // Check apakah semua variants sudah dipilih atau allow_negative_stock true
   const areAllVariantsSelected = () => {
@@ -189,23 +199,34 @@ export default function ProductDetailPage() {
     };
 
     const addToCart = async () => {
-      await addCart(payload, token!);
+      try {
+        await addCart(payload, token!);
 
-      // Ambil jumlah cart terbaru
-      dispatch(incrementCartCount());
-      const res = await getCartsCount(token!);
-      dispatch(setCartCount(res.data.count));
+        // Ambil jumlah cart terbaru
+        dispatch(incrementCartCount());
+        const res = await getCartsCount(token!);
+        dispatch(setCartCount(res.data.count));
 
-      setIsAddedToCart(true);
+        setIsAddedToCart(true);
+        if (resetAddedStateTimer.current) {
+          clearTimeout(resetAddedStateTimer.current);
+        }
+        resetAddedStateTimer.current = setTimeout(() => {
+          setIsAddedToCart(false);
+        }, 2000);
+      } catch (error) {
+        console.error("Error adding product to cart", error);
+        setIsAddedToCart(false);
+      }
     };
 
     addToCart();
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen py-16">
       {/* Breadcrumb */}
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="page-container mb-8">
         <div className="flex items-center gap-2 text-sm">
           <Link
             href="/"
@@ -227,20 +248,8 @@ export default function ProductDetailPage() {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 pb-20">
-        {/* Back Button */}
-        <Button
-          variant="outline"
-          asChild
-          className="mb-8 border-2 border-primary/20 hover:border-accent bg-transparent"
-        >
-          <Link href="/">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            BACK TO GEAR
-          </Link>
-        </Button>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16">
+      <div className="page-container">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 tracking-wider">
           {/* Product Images */}
           <div className="space-y-4">
             {product ? (
@@ -284,29 +293,24 @@ export default function ProductDetailPage() {
           </div>
 
           {/* Product Info */}
-          <div className="space-y-8">
+          <div className="space-y-4">
             {/* Header */}
             <div>
-              <h1 className="text-4xl lg:text-5xl font-black mb-4 text-balance uppercase tracking-tight">
+              <h1 className="text-4xl font-normal capitalize text-primary ">
                 {product?.name}
               </h1>
             </div>
 
             {/* Price */}
             <div className="flex items-center gap-4">
-              <span className="text-4xl font-black text-primary">
+              <span className="text-lg font-semibold text-primary">
                 {formatPrice(selectPrice)}
               </span>
             </div>
 
-            {/* Description */}
-            <p className="text-lg text-muted-foreground leading-relaxed">
-              {product?.description}
-            </p>
-
             {product?.variants?.map((variant, index) => (
               <div key={index}>
-                <h3 className="font-bold text-lg mb-4 uppercase tracking-wide">
+                <h3 className="font-medium text-xs mb-4 uppercase text-[#1B1C1C] ">
                   {variant.variant_type_name}
                 </h3>
                 <div className="flex gap-3">
@@ -327,12 +331,12 @@ export default function ProductDetailPage() {
                             },
                           )
                         }
-                        className={`px-4 py-2 border-2 rounded-lg font-bold text-sm uppercase tracking-wide transition-all ${
+                        className={`px-4 py-2 border font-bold text-primary text-sm uppercase tracking-wide transition-all ${
                           isSelected(
                             variant.variant_type_id,
                             vv.variant_value_id,
                           )
-                            ? "border-accent bg-accent text-accent-foreground"
+                            ? "border-primary bg-black text-white"
                             : "border-primary/20 hover:border-primary/40"
                         }`}
                       >
@@ -345,23 +349,20 @@ export default function ProductDetailPage() {
             ))}
 
             {/* Quantity */}
-            <div>
-              <h3 className="font-bold text-lg mb-4 uppercase tracking-wide">
-                QUANTITY
-              </h3>
-              <div className="flex items-center gap-4">
-                <div className="flex items-center border-2 border-primary/20 rounded-lg">
+            <div className="flex items-start">
+              <div className="flex flex-col items-start gap-2">
+                <div className="flex items-center border border-[#C4C7C7]">
                   <Button
                     variant="ghost"
                     size="icon"
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
                     disabled={!isVariantSelectionComplete || quantity <= 1}
-                    className="h-12 w-12"
+                    className="rounded-none"
                   >
-                    <Minus className="h-4 w-4" />
+                    <Minus className="h-2 w-2 text-primary-foreground" />
                   </Button>
                   <span
-                    className={`px-4 py-2 font-bold text-lg min-w-12 text-center ${!isVariantSelectionComplete && !product?.allow_negative_stock ? "text-gray-500" : ""}`}
+                    className={`px-3 py-2 font-normal  text-primary  text-center ${!isVariantSelectionComplete && !product?.allow_negative_stock ? "text-gray-500" : ""}`}
                   >
                     {quantity}
                   </span>
@@ -380,9 +381,9 @@ export default function ProductDetailPage() {
                       (!product?.allow_negative_stock &&
                         quantity >= selectStock)
                     }
-                    className="h-12 w-12"
+                    className="rounded-none"
                   >
-                    <Plus className="h-4 w-4" />
+                    <Plus className="h-2 w-2 text-primary" />
                   </Button>
                 </div>
                 <p className="text-sm text-muted-foreground">
@@ -391,54 +392,77 @@ export default function ProductDetailPage() {
                     : `In stock (${selectStock} available)`}
                 </p>
               </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="space-y-4">
-              <div className="flex gap-4">
-                <Button
-                  size="lg"
-                  disabled={!isVariantSelectionComplete || getCanPurchaseVariant() === false }
-                  onClick={handleToAddToCart}
-                  className={`flex-1 h-14 text-lg font-bold uppercase tracking-wide transition-all ${
-                    isAddedToCart
-                      ? "bg-green-600 hover:bg-green-600"
-                      : "bg-accent hover:bg-accent/90"
-                  }`}
-                >
-                  <ShoppingCart className="h-5 w-5 mr-2" />
-                  ADD TO CART
-                </Button>
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="h-14 px-6 border-2 border-primary/20 hover:border-accent bg-transparent"
-                >
-                  <Heart className="h-5 w-5" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="h-14 px-6 border-2 border-primary/20 hover:border-accent bg-transparent"
-                >
-                  <Share2 className="h-5 w-5" />
-                </Button>
-              </div>
-
-              {/* Buy Now button */}
               <Button
                 size="lg"
-                variant="outline"
-                // onClick={handleBuyNow}
-                disabled={!isVariantSelectionComplete}
-                className="w-full h-14 text-lg font-bold uppercase tracking-wide border-2 border-primary hover:bg-primary hover:text-primary-foreground bg-transparent"
+                disabled={
+                  !isVariantSelectionComplete ||
+                  getCanPurchaseVariant() === false
+                }
+                onClick={handleToAddToCart}
+                className={`flex-1  text-xs font-normal uppercase tracking-wide transition-all rounded-none ${
+                  isAddedToCart
+                    ? "bg-green-600 text-white hover:bg-green-600"
+                    : "bg-primary text-white"
+                }`}
               >
-                BUY NOW
+                ADD TO CART
               </Button>
             </div>
+
+            {/* Buy Now button */}
+            <Button
+              size="lg"
+              variant="outline"
+              // onClick={handleBuyNow}
+              disabled={!isVariantSelectionComplete}
+              className="w-full h-14 text-xs font-medium uppercase text-primary  border-primary hover:bg-transparent hover:text-primary/40 bg-transparent rounded-none"
+            >
+              BUY IT NOW
+            </Button>
+            <div className="w-full border-t border-[#C4C7C7] mt-8" />
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="description">
+                <AccordionTrigger className="text-xs font-normal uppercase text-primary">
+                  Description & Specifications
+                </AccordionTrigger>
+                <AccordionContent>
+                  <p className="font-normal text-primary-foreground">
+                    {product?.description}
+                  </p>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+            <div className="w-full border-t border-[#C4C7C7] mt-6" />
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="description">
+                <AccordionTrigger className="text-xs font-normal uppercase text-primary">
+                  Shipping & Returns
+                </AccordionTrigger>
+                <AccordionContent>
+                  <p className="font-normal text-primary-foreground">
+                    We offer carbon-neutral shipping worldwide.
+                  </p>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+            <div className="w-full border-t border-[#C4C7C7] mt-6" />
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="description">
+                <AccordionTrigger className="text-xs font-normal uppercase text-primary">
+                  SUSTAINABILITY
+                </AccordionTrigger>
+                <AccordionContent>
+                  <p className="font-normal text-primary-foreground">
+                    Ethically sourced materials and fair-trade
+                  </p>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+            <div className="w-full border-t border-[#C4C7C7] mt-6" />
           </div>
         </div>
       </div>
+      <ProductsSection />
     </div>
   );
 }
