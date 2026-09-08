@@ -49,15 +49,23 @@ const statusSteps = [
   },
 ];
 
-export default function OrderDetail() {
+const hasExpiryPassed = (expiryAt: string) => {
+  const expiryTime = Date.parse(expiryAt);
+
+  return !Number.isFinite(expiryTime) || expiryTime <= Date.now();
+};
+
+export default function OrderDetailPage() {
   const token = useSelector((state: RootState) => state.auth.token);
   const params = useParams();
   const id = params.id as string;
   const [order, setOrder] = useState<ShowOrderDetailResponse>();
+  const [hasReachedExpiry, setHasReachedExpiry] = useState(false);
 
   const getOrderData = useCallback(async () => {
     const data = await detailOrder(id, token!);
 
+    setHasReachedExpiry(hasExpiryPassed(data.data.expiry_at));
     setOrder(data.data);
   }, [id, token]);
 
@@ -65,8 +73,33 @@ export default function OrderDetail() {
     getOrderData();
   }, [getOrderData]);
 
+  const expiryAt = order?.expiry_at;
+
+  useEffect(() => {
+    if (!expiryAt) {
+      setHasReachedExpiry(false);
+      return;
+    }
+
+    const expiryTime = Date.parse(expiryAt);
+
+    // Fail closed if the API ever returns an invalid expiry timestamp.
+    if (hasExpiryPassed(expiryAt)) {
+      setHasReachedExpiry(true);
+      return;
+    }
+
+    setHasReachedExpiry(false);
+
+    const timeoutId = window.setTimeout(() => {
+      setHasReachedExpiry(true);
+    }, expiryTime - Date.now());
+
+    return () => window.clearTimeout(timeoutId);
+  }, [expiryAt]);
+
   const subtotalPrice = order?.details?.reduce(
-    (total, item) => total + item.price * item.qty,
+    (total, item) => total + item.final_price * item.qty,
     0,
   );
 
@@ -75,7 +108,21 @@ export default function OrderDetail() {
       step.key === order?.process_status || order?.process_status === "new",
   );
 
+  const canPay = order?.status === "pending" && !hasReachedExpiry;
+  const isEffectivelyExpired =
+    order?.status === "expired" ||
+    (order?.status === "pending" && hasReachedExpiry);
+
   const handlePay = () => {
+    if (
+      !order ||
+      order.status !== "pending" ||
+      hasExpiryPassed(order.expiry_at)
+    ) {
+      setHasReachedExpiry(true);
+      return;
+    }
+
     const pay = async () => {
       const res = await postPayment(
         {
@@ -135,7 +182,7 @@ export default function OrderDetail() {
             Order #{order.order_code}
           </h1>
         </div>
-        {order.status === "pending" && (
+        {canPay && (
           <Card className="bg-[#F5F3F3] border border-[#C4C7C7] p-6 h-fit text-center shadow-none">
             <div className="space-y-1">
               <p className="text-xs font-normal">PAYMENT DEADLINE</p>
@@ -150,7 +197,7 @@ export default function OrderDetail() {
           </Card>
         )}
       </div>
-      {order.status !== "expired" && (
+      {!isEffectivelyExpired && (
         <div className="flex items-start">
           {statusSteps.map((step, index) => {
             const Icon = step.icon;
@@ -211,9 +258,9 @@ export default function OrderDetail() {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     <div className="relative aspect-3/4 w-48 bg-transparent rounded-lg overflow-hidden">
                       <Image
+                        src={item?.image_url || "/default-image.png"}
+                        alt={item?.product_name || "/default-image.png"}
                         fill
-                        src={item.image_url || "/default-image.png"}
-                        alt={item.product_name}
                         className="object-cover"
                       />
                     </div>
@@ -276,11 +323,11 @@ export default function OrderDetail() {
               </div>
               <div className="flex justify-between">
                 <span className="text-primary-foreground">Shipping</span>
-                <span className=" text-sm">Calculated at checkout</span>
+                <span className="text-sm">{formatPrice(0)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-primary-foreground">Tax</span>
-                <span className=" text-sm">Calculated at checkout</span>
+                <span className=" text-sm">{formatPrice(0)}</span>
               </div>
               <div className="w-full border-t border-[#C4C7C7]" />
               <div className="flex justify-between text-lg">
@@ -291,17 +338,16 @@ export default function OrderDetail() {
               </div>
             </div>
 
-            {order.status === "pending" && (
+            {canPay && (
               <Button
                 size="lg"
                 className="w-full bg-primary hover:bg-primary/90 text-white font-bold mb-4"
                 onClick={handlePay}
-                disabled={order.status !== "pending"}
               >
                 COMPLETE PAYMENT
               </Button>
             )}
-            {order.status === "expired" && (
+            {isEffectivelyExpired && (
               <Card className="bg-gray-200 border border-[#C4C7C7] h-fit text-center shadow-none">
                 <div className="space-y-1">
                   <p className="text-xs font-normal">
@@ -340,7 +386,7 @@ export default function OrderDetail() {
           </Card>
         </div>
       </div>
-      {order.status === "pending" && (
+      {canPay && (
         <>
           <div className="w-full border-t border-[#C4C7C7]" />
           <div className="space-y-6">

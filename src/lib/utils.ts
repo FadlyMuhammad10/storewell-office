@@ -13,6 +13,39 @@ export const formatPrice = (price: number) => {
   }).format(price);
 };
 
+type Discount = {
+  type: string;
+  value: number;
+};
+
+export function getDiscountedPrice(
+  basePrice: number,
+  discount?: Discount,
+  finalPrice?: number,
+) {
+  if (!discount) {
+    return {
+      finalPrice: basePrice,
+      discountLabel: null,
+    };
+  }
+
+  const discountType = discount.type.toLowerCase();
+  const discountValue = Math.max(0, Number(discount.value) || 0);
+  const isPercentage =
+    discountType === "%" || discountType.includes("percent");
+  const discountAmount = isPercentage
+    ? basePrice * (Math.min(discountValue, 100) / 100)
+    : Math.min(discountValue, basePrice);
+
+  return {
+    finalPrice: finalPrice ?? Math.max(0, basePrice - discountAmount),
+    discountLabel: isPercentage
+      ? `-${discountValue}%`
+      : `-${formatPrice(discountValue)}`,
+  };
+}
+
 export function getPaginationRange(current: number, total: number, delta = 1) {
   const range: (number | "...")[] = [];
   const left = Math.max(2, current - delta);

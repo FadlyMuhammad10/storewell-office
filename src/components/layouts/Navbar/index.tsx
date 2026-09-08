@@ -41,7 +41,7 @@ export default function Navbar() {
 
           <nav className="hidden md:flex items-center gap-6 lg:gap-8">
             <Link
-              href="/"
+              href="/products"
               className="text-primary hover:text-primary transition-colors font-semibold text-xs"
             >
               Clothing

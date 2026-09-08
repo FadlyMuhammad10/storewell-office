@@ -4,6 +4,13 @@ export interface CartItem {
   product_variant_id: number;
   product_name: string;
   variant_price: number;
+  final_price?: number;
+  discount?: {
+    id: number;
+    name: string;
+    type: string;
+    value: number;
+  };
   total_price: number;
   image_url: string;
   variant_stock: number;
@@ -94,7 +101,7 @@ export interface ShowOrderDetailResponse {
   phone_number: string;
   transaction_time: string;
   payment_type: string;
-  expiry_at: Date;
+  expiry_at: string;
   details: OrderDetailResponse[];
 }
 
@@ -103,6 +110,8 @@ export interface queryParamsProduct {
   per_page: number;
   search?: string;
   category_id?: number;
+  sort_by?: "created_at" | "price";
+  sort_order?: "asc" | "desc";
 }
 export interface queryParamsOrder {
   page: number;
@@ -114,6 +123,13 @@ export interface Product {
   id: number;
   name: string;
   base_price: number;
+  final_price?: number;
+  discount?: {
+    id: number;
+    name: string;
+    type: string;
+    value: number;
+  };
   product_category_id: number;
   category_name: string;
   images: [

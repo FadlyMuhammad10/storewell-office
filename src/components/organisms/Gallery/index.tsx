@@ -16,10 +16,11 @@ export default function GallerySection() {
         {Array.from({ length: 5 }).map((_, i) => (
           <div key={i} className="relative overflow-hidden w-56 h-56">
             <Image
-              src={"/images/category.png"}
-              alt={"alt"}
+              src={`/images/gallery-${i + 1}.jpg`}
+              alt={`Gallery ${i + 1}`}
               fill
-              className="object-cover transition-transform duration-300 group-hover:scale-105"
+              sizes="224px"
+              className="object-cover"
             />
           </div>
         ))}

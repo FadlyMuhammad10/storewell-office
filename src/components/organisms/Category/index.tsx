@@ -1,9 +1,22 @@
+"use client";
+import { GetCategories } from "@/services/participant";
+import { categoryType } from "@/types";
 import { ArrowRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import React from "react";
+import React, { useCallback, useEffect, useState } from "react";
 
 export default function CategorySection() {
+  const [categories, setcategories] = useState([]);
+  const getCategories = useCallback(async () => {
+    const data = await GetCategories();
+
+    setcategories(data.data);
+  }, []);
+
+  useEffect(() => {
+    getCategories();
+  }, [getCategories]);
   return (
     <section className="page-container py-16 space-y-10">
       <div className="flex items-center justify-between">
@@ -19,22 +32,22 @@ export default function CategorySection() {
         </Link>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
-        {Array.from({ length: 4 }).map((_, i) => (
+        {categories?.slice(0, 4).map((category: categoryType) => (
           <Link
             href={"#"}
             className="space-y-2 items-center justify-center text-center"
-            key={i}
+            key={category.id}
           >
             <div className="relative overflow-hidden aspect-3/4">
               <Image
-                src={"/images/category.png"}
-                alt={"alt"}
+                src={category?.image_url || "/images/category.png"}
+                alt={category?.name}
                 fill
-                className="object-cover transition-transform duration-300 group-hover:scale-105"
+                className="object-cover w-full"
               />
             </div>
             <p className="uppercase text-xs font-semibold text-primary">
-              Clothing
+              {category.name}
             </p>
           </Link>
         ))}

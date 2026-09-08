@@ -1,6 +1,12 @@
 "use client";
-import { Button } from "@/components/ui/button";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Card } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Pagination,
   PaginationContent,
@@ -10,30 +16,58 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import { cn, formatPrice, getPaginationRange } from "@/lib/utils";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  cn,
+  formatPrice,
+  getDiscountedPrice,
+  getPaginationRange,
+} from "@/lib/utils";
 import { GetCategories, GetProducts } from "@/services/participant";
 import { categoryType } from "@/types";
-import { Product } from "@/types/interface";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Heart, X } from "lucide-react";
+import { Product, queryParamsProduct } from "@/types/interface";
+import { Heart } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
+import { Suspense, useCallback, useEffect, useState } from "react";
+
+type SortOption = "newest" | "price-asc" | "price-desc";
+
+const sortParams: Record<
+  SortOption,
+  Pick<queryParamsProduct, "sort_by" | "sort_order">
+> = {
+  newest: { sort_by: "created_at", sort_order: "desc" },
+  "price-asc": { sort_by: "price", sort_order: "asc" },
+  "price-desc": { sort_by: "price", sort_order: "desc" },
+};
 
 export default function ProductsPage() {
-  const [page, setPage] = useState(1);
+  return (
+    <Suspense fallback={<main className="min-h-screen py-16" />}>
+      <ProductsPageContent />
+    </Suspense>
+  );
+}
+
+function ProductsPageContent() {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const pageParam = Number(searchParams.get("page"));
+  const page = Number.isInteger(pageParam) && pageParam > 0 ? pageParam : 1;
   const [totalPage, setTotalPage] = useState(1);
   const [totalDataPage, setTotalDataPage] = useState(0);
   const [productsData, setProductsData] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState("");
+  const [sortBy, setSortBy] = useState<SortOption>("newest");
   const [categoriesData, setCategoriesData] = useState<categoryType[]>();
-  const [showFilters, setShowFilters] = useState(false);
 
   const getProducts = useCallback(async () => {
     setLoading(true);
@@ -42,6 +76,7 @@ export default function ProductsPage() {
         page,
         per_page: 10,
         category_id: Number(selectedCategory) || undefined,
+        ...sortParams[sortBy],
       });
 
       setLoading(false);
@@ -53,7 +88,7 @@ export default function ProductsPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, selectedCategory]);
+  }, [page, selectedCategory, sortBy]);
 
   const getCategories = useCallback(async () => {
     const data = await GetCategories();
@@ -66,6 +101,13 @@ export default function ProductsPage() {
     getCategories();
   }, [getProducts, getCategories]);
 
+  const getPageHref = (nextPage: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("page", nextPage.toString());
+
+    return `${pathname}?${params.toString()}#products`;
+  };
+
   const pages = getPaginationRange(page, totalPage, 1);
 
   return (
@@ -73,20 +115,8 @@ export default function ProductsPage() {
       <div className="page-container">
         <div className="flex gap-8">
           {/* Sidebar */}
-          {showFilters && (
-            <div className="w-64 shrink-0 text-primary">
+            <div className="w-52 shrink-0 text-primary">
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-normal text-sm uppercase tracking-wide">
-                    FILTERS
-                  </h3>
-                  <button
-                    onClick={() => setShowFilters(false)}
-                    className="p-1 hover:bg-accent rounded transition"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
                 <Accordion type="single" collapsible className="w-full">
                   <AccordionItem value="category">
                     <AccordionTrigger className="text-xs font-normal uppercase text-primary">
@@ -127,7 +157,7 @@ export default function ProductsPage() {
                 </Accordion>
               </div>
             </div>
-          )}
+
 
           {/* Products Grid */}
           <div className="flex-1">
@@ -136,56 +166,85 @@ export default function ProductsPage() {
                 {totalDataPage} Product
                 {productsData.length !== 1 ? "s" : ""}
               </div>
-              <div className="">
-                <p
-                  onClick={() => setShowFilters(!showFilters)}
-                  className="text-xs text-primary-foreground font-normal hover:underline hover:cursor-pointer"
+              <Select
+                value={sortBy}
+                onValueChange={(value: SortOption) => setSortBy(value)}
+              >
+                <SelectTrigger
+                  aria-label="Sort products"
+                  className="h-auto border-0 px-0 py-0 text-xs font-normal text-primary-foreground shadow-none focus-visible:ring-0"
                 >
-                  Filters
-                </p>
-              </div>
+                  <span>Sort by:</span>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent align="end">
+                  <SelectItem value="newest">New first</SelectItem>
+                  <SelectItem value="price-asc">Price: Low to high</SelectItem>
+                  <SelectItem value="price-desc">Price: High to low</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <div className="w-full border-t border-[#C4C7C7]" />
+            <div
+              id="products"
+              className="w-full scroll-mt-24 border-t border-[#C4C7C7]"
+            />
 
             {productsData.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 tracking-wider">
-                {productsData.map((product) => (
-                  <Link
-                    href={`/products/${product.id}`}
-                    className="block"
-                    key={product.id}
-                  >
-                    <Card className="border-0 shadow-none rounded-none bg-transparent">
-                      {/* Image */}
-                      <div className="relative overflow-hidden aspect-3/4 bg-transparent">
-                        <Image
-                          src={
-                            product.images?.[0]?.image_url ||
-                            "/default-image.png"
-                          }
-                          alt={product.name}
-                          fill
-                          className="object-cover transition-transform duration-300 group-hover:scale-105"
-                        />
-                        <div className="group absolute top-3 right-3 flex h-10 w-10 items-center justify-center rounded-full bg-red-500">
-                          <Heart className="h-4 w-4 text-white group-hover:text-primary group-hover:fill-primary" />
+                {productsData.map((product) => {
+                  const { finalPrice, discountLabel } = getDiscountedPrice(
+                    product.base_price,
+                    product.discount,
+                    product.final_price,
+                  );
+                  return (
+                    <Link
+                      href={`/products/${product.id}`}
+                      className="block"
+                      key={product.id}
+                    >
+                      <Card className="border-0 shadow-none rounded-none bg-transparent">
+                        {/* Image */}
+                        <div className="relative overflow-hidden aspect-3/4 bg-transparent">
+                          <Image
+                            src={
+                              product.images?.[0]?.image_url ||
+                              "/default-image.png"
+                            }
+                            alt={product.name}
+                            fill
+                            className="object-cover transition-transform duration-300 group-hover:scale-105"
+                          />
+                          <div className="group absolute top-3 right-3 flex h-10 w-10 items-center justify-center rounded-full bg-red-500">
+                            <Heart className="h-4 w-4 text-white group-hover:text-primary group-hover:fill-primary" />
+                          </div>
                         </div>
-                      </div>
 
-                      {/* Info */}
-                      <div className="space-y-1">
-                        <h3 className=" font-normal text-primary capitalize">
-                          {product.name}
-                        </h3>
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold text-xs">
-                            {formatPrice(product.base_price!)}
-                          </span>
+                        {/* Info */}
+                        <div className="space-y-1">
+                          <h3 className=" font-normal text-primary capitalize">
+                            {product.name}
+                          </h3>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="font-semibold text-xs">
+                              {formatPrice(finalPrice)}
+                            </span>
+                            {discountLabel && (
+                              <>
+                                <span className="text-xs text-muted-foreground line-through">
+                                  {formatPrice(product.base_price)}
+                                </span>
+                                <span className="text-xs font-semibold text-red-500">
+                                  {discountLabel}
+                                </span>
+                              </>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    </Card>
-                  </Link>
-                ))}
+                      </Card>
+                    </Link>
+                  );
+                })}
               </div>
             ) : (
               <div className="text-center py-16">
@@ -200,7 +259,9 @@ export default function ProductsPage() {
                 <PaginationContent>
                   <PaginationItem>
                     <PaginationPrevious
-                      onClick={() => setPage(page - 1)}
+                      href={getPageHref(Math.max(1, page - 1))}
+                      aria-disabled={loading || page <= 1}
+                      tabIndex={loading || page <= 1 ? -1 : undefined}
                       className={
                         loading || page <= 1
                           ? "pointer-events-none opacity-50"
@@ -216,7 +277,9 @@ export default function ProductsPage() {
                       ) : (
                         <PaginationLink
                           isActive={p === page}
-                          onClick={() => setPage(p)}
+                          href={getPageHref(p)}
+                          aria-disabled={loading}
+                          tabIndex={loading ? -1 : undefined}
                           className={cn(
                             "cursor-pointer text-sm transition-colors",
                             p === page
@@ -233,7 +296,11 @@ export default function ProductsPage() {
 
                   <PaginationItem>
                     <PaginationNext
-                      onClick={() => setPage(page + 1)}
+                      href={getPageHref(Math.min(totalPage, page + 1))}
+                      aria-disabled={loading || page >= totalPage}
+                      tabIndex={
+                        loading || page >= totalPage ? -1 : undefined
+                      }
                       className={
                         loading || page >= totalPage
                           ? "pointer-events-none opacity-50"

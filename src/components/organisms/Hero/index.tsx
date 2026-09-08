@@ -5,7 +5,7 @@ export default function HeroSection() {
   return (
     <section className="relative h-[70vh] min-h-[800px] overflow-hidden">
       <Image
-        src="/images/confident-man-in-urban-streetwear-with-shopping-ba.jpg"
+        src="/images/hero-banner.jpeg"
         alt="Urban Fashion"
         fill
         priority

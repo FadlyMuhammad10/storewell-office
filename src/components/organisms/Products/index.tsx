@@ -1,9 +1,8 @@
 "use client";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, getDiscountedPrice } from "@/lib/utils";
 import { GetProducts } from "@/services/participant";
-import { productType } from "@/types";
+import { Product } from "@/types/interface";
 import { ArrowRight, Heart } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -39,38 +38,56 @@ export default function ProductsSection() {
       </div>
       {/* Products Grid */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
-        {products?.map((product: productType) => (
-          <Link
-            href={`/products/${product.id}`}
-            className="block"
-            key={product.id}
-          >
-            <Card className="group border-0 shadow-none rounded-none bg-background space-y-1">
-              {/* Image */}
-              <div className="relative overflow-hidden aspect-3/4">
-                <Image
-                  src={product.images?.[0]?.image_url || "/default-image.png"}
-                  alt={product.name}
-                  fill
-                  className="object-cover transition-transform duration-300 group-hover:scale-105"
-                />
-                <div className="group absolute top-3 right-3 flex h-10 w-10 items-center justify-center rounded-full bg-red-500">
-                  <Heart className="h-4 w-4 text-white group-hover:text-primary group-hover:fill-primary" />
-                </div>
-              </div>
+        {products?.map((product: Product) => {
+          const { finalPrice, discountLabel } = getDiscountedPrice(
+            product.base_price,
+            product.discount,
+            product.final_price,
+          );
 
-              {/* Info */}
-              <div className="space-y-1">
-                <h3 className=" font-normal text-primary">{product.name}</h3>
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold text-xs">
-                    {formatPrice(product.base_price!)}
-                  </span>
+          return (
+            <Link
+              href={`/products/${product.id}`}
+              className="block"
+              key={product.id}
+            >
+              <Card className="group border-0 shadow-none rounded-none bg-background space-y-1">
+                {/* Image */}
+                <div className="relative overflow-hidden aspect-3/4">
+                  <Image
+                    src={product.images?.[0]?.image_url || "/default-image.png"}
+                    alt={product.name}
+                    fill
+                    className="object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                  <div className="group absolute top-3 right-3 flex h-10 w-10 items-center justify-center rounded-full bg-red-500">
+                    <Heart className="h-4 w-4 text-white group-hover:text-primary group-hover:fill-primary" />
+                  </div>
                 </div>
-              </div>
-            </Card>
-          </Link>
-        ))}
+
+                {/* Info */}
+                <div className="space-y-1">
+                  <h3 className=" font-normal text-primary">{product.name}</h3>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-semibold text-xs">
+                      {formatPrice(finalPrice)}
+                    </span>
+                    {discountLabel && (
+                      <>
+                        <span className="text-xs text-muted-foreground line-through">
+                          {formatPrice(product.base_price)}
+                        </span>
+                        <span className="text-xs font-semibold text-red-500">
+                          {discountLabel}
+                        </span>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </Card>
+            </Link>
+          );
+        })}
       </div>
     </section>
   );

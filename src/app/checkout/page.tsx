@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { checkoutSchema } from "@/lib/schema";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, getDiscountedPrice } from "@/lib/utils";
 import { setCartCount } from "@/redux/slices/cartSlice";
 import { RootState } from "@/redux/store";
 import {
@@ -25,6 +25,7 @@ import {
 } from "@/services/participant";
 import { CheckoutRequest, CostPayload } from "@/types";
 import {
+  CartItem,
   CityItem,
   CostItem,
   DistrictItem,
@@ -35,6 +36,34 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useDispatch, useSelector } from "react-redux";
+
+function getCheckoutItemPrice(item: CartItem) {
+  return getDiscountedPrice(
+    item.variant_price,
+    item.discount,
+    item.final_price,
+  );
+}
+
+function CheckoutItemPrice({ item }: { item: CartItem }) {
+  const { finalPrice, discountLabel } = getCheckoutItemPrice(item);
+
+  return (
+    <div className="flex flex-wrap items-center gap-2 text-sm">
+      <span className="font-light text-primary">{formatPrice(finalPrice)}</span>
+      {discountLabel && (
+        <>
+          <span className="text-xs text-muted-foreground line-through">
+            {formatPrice(item.variant_price)}
+          </span>
+          <span className="text-xs font-semibold text-red-500">
+            {discountLabel}
+          </span>
+        </>
+      )}
+    </div>
+  );
+}
 
 export default function CheckoutPage() {
   const token = useSelector((state: RootState) => state.auth.token);
@@ -64,7 +93,7 @@ export default function CheckoutPage() {
   const dispatch = useDispatch();
 
   const subtotalPrice = itemsCheckout.reduce(
-    (total, item) => total + item.variant_price! * item.qty,
+    (total, item) => total + getCheckoutItemPrice(item).finalPrice * item.qty,
     0,
   );
 
@@ -79,13 +108,20 @@ export default function CheckoutPage() {
       phone_number: "",
       postal_code: "",
       address: "",
-      nominal_amount: subtotalPrice,
-      final_amount: totalPrice,
       cart_items: itemsCheckout.map((item) => ({ cart_id: item.id })) as [
         { cart_id: number },
       ],
     },
   });
+
+  useEffect(() => {
+    form.setValue(
+      "cart_items",
+      itemsCheckout.map((item) => ({ cart_id: item.id })) as [
+        { cart_id: number },
+      ],
+    );
+  }, [form, itemsCheckout, subtotalPrice, totalPrice]);
 
   useEffect(() => {
     const fetchProvince = async () => {
@@ -221,7 +257,14 @@ export default function CheckoutPage() {
     : "Enter your address to shipping estimate";
 
   const formSubmit = async (data: unknown) => {
-    const checkoutData = data as CheckoutRequest;
+    const checkoutData = {
+      ...(data as CheckoutRequest),
+      nominal_amount: subtotalPrice,
+      final_amount: totalPrice,
+      cart_items: itemsCheckout.map((item) => ({ cart_id: item.id })) as [
+        { cart_id: number },
+      ],
+    };
     setIsSubmitting(true);
 
     try {
@@ -488,9 +531,7 @@ export default function CheckoutPage() {
                             ))}
                           </div>
                         </div>
-                        <span className="text-primary font-light text-sm">
-                          {formatPrice(item.variant_price)}
-                        </span>
+                        <CheckoutItemPrice item={item} />
                       </div>
                       <span className="text-primary-foreground">
                         {item.qty}x

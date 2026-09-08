@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, getDiscountedPrice } from "@/lib/utils";
 import { setCartCount } from "@/redux/slices/cartSlice";
 import { setCheckoutItems } from "@/redux/slices/checkoutSlice";
 import { RootState } from "@/redux/store";
@@ -19,6 +19,37 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+
+function getCartItemPrice(item: CartItem) {
+  return getDiscountedPrice(
+    item.variant_price,
+    item.discount,
+    item.final_price,
+  );
+}
+
+function CartItemPrice({ item }: { item: CartItem }) {
+  const { finalPrice, discountLabel } = getCartItemPrice(item);
+
+  return (
+    <div className="text-right">
+      <p className="font-normal capitalize text-primary text-xl">
+        {formatPrice(finalPrice * item.qty)}
+      </p>
+      {discountLabel && (
+        <div className="flex items-center justify-end gap-2 text-xs">
+          <span className="text-muted-foreground line-through">
+            {formatPrice(item.variant_price * item.qty)}
+          </span>
+          <span className="font-semibold text-red-500">{discountLabel}</span>
+        </div>
+      )}
+      <p className="text-xs text-primary-foreground">
+        {formatPrice(finalPrice)} each
+      </p>
+    </div>
+  );
+}
 
 export default function CartPage() {
   const router = useRouter();
@@ -94,7 +125,8 @@ export default function CartPage() {
     );
 
     return selectedItems.reduce(
-      (total, item) => total + item.variant_price * item.qty,
+      (total, item) =>
+        total + getCartItemPrice(item).finalPrice * item.qty,
       0,
     );
   };
@@ -245,14 +277,7 @@ export default function CartPage() {
                           </div>
                         </div>
                         <div className="flex h-full flex-col justify-between items-end">
-                          <div className="text-right">
-                            <p className="font-normal capitalize text-primary text-xl">
-                              {formatPrice(item.variant_price * item.qty)}
-                            </p>
-                            <p className="text-xs text-primary-foreground">
-                              {formatPrice(item.variant_price)} each
-                            </p>
-                          </div>
+                          <CartItemPrice item={item} />
                           <Button
                             variant="ghost"
                             size="sm"

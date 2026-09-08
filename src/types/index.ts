@@ -1,6 +1,7 @@
 export type categoryType = {
   id: number;
   name: string;
+  image_url: string | null;
 };
 
 export type imageType = {
@@ -24,6 +25,13 @@ export type productType = {
   id: number;
   name: string;
   base_price: number;
+  final_price?: number;
+  discount?: {
+    id: number;
+    name: string;
+    type: string;
+    value: number;
+  };
   description?: string;
   stock?: number;
   status?: boolean;
@@ -75,6 +83,13 @@ export interface ProductDetail {
   name: string;
   description: string;
   base_price: number;
+  final_price?: number;
+  discount?: {
+    id: number;
+    name: string;
+    type: string;
+    value: number;
+  };
   is_sale: boolean;
   allow_negative_stock: boolean;
   product_unit_id: number;

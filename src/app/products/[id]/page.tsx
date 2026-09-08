@@ -9,7 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { addCartSchema } from "@/lib/schema";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, getDiscountedPrice } from "@/lib/utils";
 import { incrementCartCount, setCartCount } from "@/redux/slices/cartSlice";
 import { RootState } from "@/redux/store";
 import {
@@ -165,6 +165,11 @@ export default function ProductDetailPage() {
 
   const selectStock = Number(getTotalStock() ?? 0);
   const selectPrice = getPriceVariant();
+  const { finalPrice: selectedFinalPrice, discountLabel } = getDiscountedPrice(
+    selectPrice,
+    product?.discount,
+    selectedVariants.variants.length === 0 ? product?.final_price : undefined,
+  );
 
   const getCanPurchaseVariant = () => {
     if (!product?.combinations) {
@@ -302,10 +307,20 @@ export default function ProductDetailPage() {
             </div>
 
             {/* Price */}
-            <div className="flex items-center gap-4">
+            <div className="flex flex-wrap items-center gap-4">
               <span className="text-lg font-semibold text-primary">
-                {formatPrice(selectPrice)}
+                {formatPrice(selectedFinalPrice)}
               </span>
+              {discountLabel && (
+                <>
+                  <span className="text-sm text-muted-foreground line-through">
+                    {formatPrice(selectPrice)}
+                  </span>
+                  <span className="text-sm font-semibold text-red-500">
+                    {discountLabel}
+                  </span>
+                </>
+              )}
             </div>
 
             {product?.variants?.map((variant, index) => (
@@ -426,9 +441,12 @@ export default function ProductDetailPage() {
                   Description & Specifications
                 </AccordionTrigger>
                 <AccordionContent>
-                  <p className="font-normal text-primary-foreground">
-                    {product?.description}
-                  </p>
+                  <div
+                    className="font-normal text-primary-foreground"
+                    dangerouslySetInnerHTML={{
+                      __html: product?.description || "",
+                    }}
+                  />
                 </AccordionContent>
               </AccordionItem>
             </Accordion>

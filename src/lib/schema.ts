@@ -21,8 +21,6 @@ export const checkoutSchema = z.object({
   phone_number: z.string().min(1),
   address: z.string().min(1),
   postal_code: z.string().min(1),
-  nominal_amount: z.number().positive(),
-  final_amount: z.number().positive(),
   cart_items: z.array(
     z.object({
       cart_id: z.number().positive(),
