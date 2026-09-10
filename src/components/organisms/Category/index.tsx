@@ -1,17 +1,19 @@
 "use client";
-import { GetCategories } from "@/services/participant";
-import { categoryType } from "@/types";
+import { GetCategoriesRoot } from "@/services/participant";
+import { RootCategory } from "@/types";
 import { ArrowRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import React, { useCallback, useEffect, useState } from "react";
 
 export default function CategorySection() {
-  const [categories, setcategories] = useState([]);
-  const getCategories = useCallback(async () => {
-    const data = await GetCategories();
+  const [categories, setCategories] = useState<RootCategory[]>([]);
 
-    setcategories(data.data);
+  const getCategories = useCallback(async () => {
+    const response = await GetCategoriesRoot();
+    const payload = response?.data?.data ?? response?.data;
+
+    setCategories(Array.isArray(payload) ? payload : []);
   }, []);
 
   useEffect(() => {
@@ -19,22 +21,30 @@ export default function CategorySection() {
   }, [getCategories]);
   return (
     <section className="page-container py-16 space-y-10">
-      <div className="flex items-center justify-between">
-        <h2 className="text-primary text-2xl font-medium">Shop by Category</h2>
-        <Link
-          href={"/products"}
-          className="group inline-flex items-center gap-1"
-        >
-          <p className="text-xs capitalize font-semibold text-primary group-hover:underline">
-            View All
+      <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h2 className="text-3xl font-semibold tracking-tight text-primary">
+            Shop by Category
+          </h2>
+          <p className="mt-2 text-sm text-primary-foreground">
+            Explore our curated foundational collections
           </p>
-          <ArrowRight className="w-4 h-4 text-muted-foreground" />
+        </div>
+
+        <Link
+          href="/products"
+          className="group inline-flex items-center gap-1 self-start text-xs font-bold uppercase tracking-wider text-primary sm:self-auto"
+        >
+          <span className="group-hover:underline">
+            View all root categories
+          </span>
+          <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
         </Link>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
-        {categories?.slice(0, 4).map((category: categoryType) => (
+        {categories.slice(0, 4).map((category) => (
           <Link
-            href={"#"}
+            href={`/products?category_id=${category.id}`}
             className="space-y-2 items-center justify-center text-center"
             key={category.id}
           >

@@ -4,6 +4,31 @@ export type categoryType = {
   image_url: string | null;
 };
 
+export interface RootCategory {
+  id: number;
+  name: string;
+  slug: string;
+  image_url: string | null;
+}
+
+export interface ParticipantBrandResponse {
+  id: number;
+  name: string;
+  is_active: boolean;
+  countProduct: number;
+}
+
+export interface ParticipantBrandQuery {
+  search?: string;
+}
+
+export type CategoryTree = categoryType & {
+  parent_id: number | null;
+  slug: string;
+  public_id: string | null;
+  children: CategoryTree[];
+};
+
 export type imageType = {
   image_url?: string;
   isPrimary?: boolean | null;

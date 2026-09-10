@@ -1,3 +1,4 @@
+import BrandSection from "@/components/organisms/Brand";
 import CategorySection from "@/components/organisms/Category";
 import GallerySection from "@/components/organisms/Gallery";
 import HeroSection from "@/components/organisms/Hero";
@@ -13,6 +14,7 @@ export default function Home() {
         <CategorySection />
       </div>
       <ProductsSection />
+      <BrandSection />
       <PromotialHero />
       <div className="bg-[#EFEDED]">
         <TestimonialHero />

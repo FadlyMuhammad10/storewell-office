@@ -13,7 +13,7 @@ export default function ProductsSection() {
   const getProducts = useCallback(async () => {
     const data = await GetProducts({
       page: 1,
-      per_page: 8,
+      per_page: 4,
     });
 
     setProducts(data.data);
@@ -24,16 +24,23 @@ export default function ProductsSection() {
   }, [getProducts]);
   return (
     <section className="page-container py-16 space-y-10">
-      <div className="flex items-center justify-between">
-        <h2 className="text-primary text-2xl font-medium">Newest Arrivals</h2>
-        <Link
-          href={"/products"}
-          className="group inline-flex items-center gap-1"
-        >
-          <p className="text-xs capitalize font-semibold text-primary group-hover:underline">
-            View All
+      <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h2 className="text-3xl font-semibold tracking-tight text-primary">
+            New Arrivals
+          </h2>
+          <p className="mt-2 text-sm text-primary-foreground">
+            Seasonal silhouettes engineered in natural wool, cashmere, and
+            poplin
           </p>
-          <ArrowRight className="w-4 h-4 text-muted-foreground" />
+        </div>
+
+        <Link
+          href="/products"
+          className="group inline-flex items-center gap-1 self-start text-xs font-bold uppercase tracking-wider text-primary sm:self-auto"
+        >
+          <span className="group-hover:underline">View all new arrivals</span>
+          <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
         </Link>
       </div>
       {/* Products Grid */}

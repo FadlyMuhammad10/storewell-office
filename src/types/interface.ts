@@ -110,8 +110,36 @@ export interface queryParamsProduct {
   per_page: number;
   search?: string;
   category_id?: number;
+  brand_id?: number;
+  brand_ids?: string;
   sort_by?: "created_at" | "price";
   sort_order?: "asc" | "desc";
+}
+
+export interface ProductFacetQuery {
+  search?: string;
+  category_id?: number;
+  brand_id?: number;
+  brand_ids?: string;
+}
+
+export interface ProductFacetBrand {
+  id: number;
+  name: string;
+  count: number;
+}
+
+export interface ProductFacetCategory {
+  id: number;
+  name: string;
+  slug: string;
+  count: number;
+  children: ProductFacetCategory[];
+}
+
+export interface ProductFacets {
+  brands: ProductFacetBrand[];
+  categories: ProductFacetCategory[];
 }
 export interface queryParamsOrder {
   page: number;

@@ -1,13 +1,42 @@
 import CallAPI from "@/config/api";
 import { addCartSchema } from "@/lib/schema";
-import { CheckoutRequest, CostPayload, CreatePaymentRequest } from "@/types";
-import { queryParamsOrder, queryParamsProduct } from "@/types/interface";
+import {
+  CheckoutRequest,
+  CostPayload,
+  CreatePaymentRequest,
+  ParticipantBrandQuery,
+} from "@/types";
+import {
+  ProductFacetQuery,
+  queryParamsOrder,
+  queryParamsProduct,
+} from "@/types/interface";
 import z from "zod";
 
 export async function GetCategories() {
   const url = `/participant/categories`;
 
   return CallAPI({ url, method: "GET" });
+}
+export async function GetCategoriesTree() {
+  const url = `/participant/categories/tree`;
+
+  return CallAPI({ url, method: "GET" });
+}
+export async function GetCategoriesRoot() {
+  const url = `/participant/categories/root`;
+
+  return CallAPI({ url, method: "GET" });
+}
+export async function GetDataBrands(params?: ParticipantBrandQuery) {
+  const url = `/participant/brands`;
+
+  return CallAPI({ url, method: "GET", params });
+}
+export async function GetProductsFacets(params?: ProductFacetQuery) {
+  const url = `/participant/products/facets`;
+
+  return CallAPI({ url, method: "GET", params });
 }
 
 export async function GetProducts(params: queryParamsProduct) {
