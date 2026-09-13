@@ -14,6 +14,7 @@ import {
 import { checkoutSchema } from "@/lib/schema";
 import { formatPrice, getDiscountedPrice } from "@/lib/utils";
 import { setCartCount } from "@/redux/slices/cartSlice";
+import { clearCheckoutItems } from "@/redux/slices/checkoutSlice";
 import { RootState } from "@/redux/store";
 import {
   getCartsCount,
@@ -33,6 +34,7 @@ import {
 } from "@/types/interface";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useDispatch, useSelector } from "react-redux";
@@ -66,6 +68,7 @@ function CheckoutItemPrice({ item }: { item: CartItem }) {
 }
 
 export default function CheckoutPage() {
+  const router = useRouter();
   const token = useSelector((state: RootState) => state.auth.token);
   const itemsCheckout = useSelector((state: RootState) => state.checkout.items);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -271,13 +274,20 @@ export default function CheckoutPage() {
       const res = await postCheckout(checkoutData, token!);
       const orderCode = res.data.order_code;
 
-      const count = await getCartsCount(token!);
-      dispatch(setCartCount(count.data.count));
+      dispatch(clearCheckoutItems());
 
-      window.location.href = `/orders/${orderCode}`;
+      try {
+        const count = await getCartsCount(token!);
+        dispatch(setCartCount(Number(count.data.count) || 0));
+      } catch (error) {
+        // The order is already created. Navigation must still continue; the
+        // Navbar will retry syncing the count on the next route.
+        console.error("Order created, but cart count sync failed:", error);
+      }
+
+      router.replace(`/orders/${orderCode}`);
     } catch (error) {
       console.log("error", error);
-      setIsSubmitting(false);
     } finally {
       setIsSubmitting(false);
     }

@@ -9,9 +9,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { logOut } from "@/redux/slices/authSlice";
+import { resetCartCount, setCartCount } from "@/redux/slices/cartSlice";
+import { clearCheckoutItems } from "@/redux/slices/checkoutSlice";
 import { RootState } from "@/redux/store";
 import { postLogout } from "@/services/auth";
-import { GetCategoriesTree } from "@/services/participant";
+import { getCartsCount, GetCategoriesTree } from "@/services/participant";
 import { CategoryTree } from "@/types";
 import {
   ChevronDown,
@@ -84,6 +86,7 @@ export default function Navbar() {
   const dispatch = useDispatch();
   const pathname = usePathname();
   const login = useSelector((state: RootState) => state.auth.isLogin);
+  const token = useSelector((state: RootState) => state.auth.token);
   const cartCount = useSelector((state: RootState) => state.cart.count);
   const user = useSelector((state: RootState) => state.auth.user);
   const refreshToken = useSelector(
@@ -117,12 +120,41 @@ export default function Navbar() {
     closeCategoryMenus();
   }, [pathname, closeCategoryMenus]);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!login || !token) {
+      dispatch(resetCartCount());
+      return;
+    }
+
+    async function syncCartCount(authToken: string) {
+      try {
+        const response = await getCartsCount(authToken);
+
+        if (!cancelled) {
+          dispatch(setCartCount(Number(response.data.count) || 0));
+        }
+      } catch (error) {
+        console.error("Failed to sync cart count:", error);
+      }
+    }
+
+    syncCartCount(token);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [dispatch, login, pathname, token]);
+
   const activeCategory = categories.find(
     (category) => category.id === activeCategoryId,
   );
 
   const handleLogout = async () => {
     dispatch(logOut());
+    dispatch(resetCartCount());
+    dispatch(clearCheckoutItems());
     await postLogout(refreshToken!);
   };
 
