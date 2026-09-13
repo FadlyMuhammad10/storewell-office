@@ -9,7 +9,7 @@ import { setCartCount } from "@/redux/slices/cartSlice";
 import { postLogin } from "@/services/auth";
 import { getCartsCount } from "@/services/participant";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, EyeOff, Lock, User } from "lucide-react";
+import { Eye, EyeOff, User } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";

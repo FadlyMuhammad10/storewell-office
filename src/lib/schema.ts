@@ -1,4 +1,4 @@
-import { email, z } from "zod";
+import { z } from "zod";
 
 export const signupSchema = z.object({
   firstName: z.string().min(1, "Name is required"),

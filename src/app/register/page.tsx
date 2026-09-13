@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { signupSchema } from "@/lib/schema";
 import { postRegister } from "@/services/auth";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, Eye, EyeOff, UserPlus } from "lucide-react";
+import { Eye, EyeOff, UserPlus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
