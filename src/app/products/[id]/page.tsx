@@ -229,28 +229,46 @@ export default function ProductDetailPage() {
   };
 
   return (
-    <div className="min-h-screen py-16">
+    <div className="min-h-screen py-8">
       {/* Breadcrumb */}
       <div className="page-container mb-8">
-        <div className="flex items-center gap-2 text-sm">
+        <nav
+          aria-label="Breadcrumb"
+          className="flex flex-wrap items-center gap-2 text-sm"
+        >
           <Link
             href="/"
             className="text-muted-foreground hover:text-primary font-medium"
           >
             HOME
           </Link>
-          <span className="text-muted-foreground">/</span>
-          <Link
-            href="/#products"
-            className="text-muted-foreground hover:text-primary font-medium"
-          >
-            GEAR
-          </Link>
-          <span className="text-muted-foreground">/</span>
-          <span className="text-primary font-bold uppercase">
-            {product?.category_name}
-          </span>
-        </div>
+          {product?.breadcrumb.map((item) => (
+            <div key={item.id} className="flex items-center gap-2">
+              <span aria-hidden="true" className="text-muted-foreground">
+                /
+              </span>
+              <Link
+                href={`/products?category_id=${item.id}`}
+                className="text-muted-foreground hover:text-primary font-medium uppercase"
+              >
+                {item.name}
+              </Link>
+            </div>
+          ))}
+          {product && (
+            <div className="flex items-center gap-2">
+              <span aria-hidden="true" className="text-muted-foreground">
+                /
+              </span>
+              <span
+                aria-current="page"
+                className="text-primary font-bold uppercase"
+              >
+                {product.name}
+              </span>
+            </div>
+          )}
+        </nav>
       </div>
 
       <div className="page-container">

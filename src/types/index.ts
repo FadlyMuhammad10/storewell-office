@@ -103,6 +103,18 @@ export type CreatePaymentRequest = {
   order_code: string;
 };
 
+export interface ProductDetailCategory {
+  id: number;
+  name: string;
+  is_primary: boolean;
+}
+
+export interface ProductBreadcrumbItem {
+  id: number;
+  name: string;
+  slug: string;
+}
+
 export interface ProductDetail {
   id: number;
   name: string;
@@ -119,8 +131,8 @@ export interface ProductDetail {
   allow_negative_stock: boolean;
   product_unit_id: number;
   unit_name: string;
-  product_category_id: number;
-  category_name: string;
+  categories: ProductDetailCategory[];
+  breadcrumb: ProductBreadcrumbItem[];
   images: [
     {
       id: number;
