@@ -32,7 +32,7 @@ export default function CategorySection() {
         </div>
 
         <Link
-          href="/products"
+          href="/categories"
           className="group inline-flex items-center gap-1 self-start text-xs font-bold uppercase tracking-wider text-primary sm:self-auto"
         >
           <span className="group-hover:underline">
