@@ -49,6 +49,20 @@ function categoryHref(id: number) {
   return `/products?category_id=${id}`;
 }
 
+function getUserInitials(name?: string, email?: string) {
+  const nameParts = name?.trim().split(/\s+/).filter(Boolean) ?? [];
+
+  if (nameParts.length > 0) {
+    const firstInitial = nameParts[0].charAt(0);
+    const lastInitial =
+      nameParts.length > 1 ? nameParts[nameParts.length - 1].charAt(0) : "";
+
+    return `${firstInitial}${lastInitial}`.toUpperCase();
+  }
+
+  return email?.trim().charAt(0).toUpperCase() || "U";
+}
+
 function CategoryChildren({
   categories,
   level = 0,
@@ -238,7 +252,13 @@ export default function Navbar() {
           {login ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <User className="h-4 w-4 text-primary hover:cursor-pointer" />
+                <button
+                  type="button"
+                  aria-label={`Open account menu for ${user?.name || user?.email || "user"}`}
+                  className="inline-flex size-8 items-center justify-center rounded-full bg-primary text-xs font-semibold uppercase text-white transition-colors hover:bg-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                >
+                  {getUserInitials(user?.name, user?.email)}
+                </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
                 <div className="px-2 py-1.5">

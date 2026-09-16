@@ -382,7 +382,7 @@ export default function ProductDetailPage() {
             ))}
 
             {/* Quantity */}
-            <div className="flex items-start">
+            <div className="flex items-start gap-4">
               <div className="flex flex-col items-start gap-2">
                 <div className="flex items-center border border-[#C4C7C7]">
                   <Button
