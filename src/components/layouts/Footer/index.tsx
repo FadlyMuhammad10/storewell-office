@@ -53,7 +53,7 @@ export default function Footer() {
         </div>
 
         <div className="space-y-4">
-          <h4 className="font-semibold text-primary uppercase text-xs">
+          <h4 id="footer-support" className="font-semibold text-primary uppercase text-xs">
             Support
           </h4>
           <ul className="space-y-2 font-light text-sm">
