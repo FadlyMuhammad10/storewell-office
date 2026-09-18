@@ -150,6 +150,8 @@ export interface queryParamsOrder {
 export interface Product {
   id: number;
   name: string;
+  brand_id?: number | null;
+  brand_name?: string | null;
   base_price: number;
   final_price?: number;
   discount?: {

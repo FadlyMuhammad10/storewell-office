@@ -560,6 +560,11 @@ function ProductsPageContent() {
 
                         {/* Info */}
                         <div className="space-y-1">
+                          {product.brand_name?.trim() && (
+                            <p className="text-base font-bold text-primary">
+                              {product.brand_name}
+                            </p>
+                          )}
                           <h3 className=" font-normal text-primary capitalize">
                             {product.name}
                           </h3>

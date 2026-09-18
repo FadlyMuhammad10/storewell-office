@@ -118,6 +118,8 @@ export interface ProductBreadcrumbItem {
 export interface ProductDetail {
   id: number;
   name: string;
+  brand_id?: number | null;
+  brand_name?: string | null;
   description: string;
   base_price: number;
   final_price?: number;

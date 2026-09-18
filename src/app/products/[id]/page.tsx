@@ -319,6 +319,11 @@ export default function ProductDetailPage() {
           <div className="space-y-4">
             {/* Header */}
             <div>
+              {product?.brand_name?.trim() && (
+                <p className="mb-2 text-xl font-bold text-primary">
+                  {product.brand_name}
+                </p>
+              )}
               <h1 className="text-4xl font-normal capitalize text-primary ">
                 {product?.name}
               </h1>

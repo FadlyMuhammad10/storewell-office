@@ -74,6 +74,11 @@ export default function ProductsSection() {
 
                 {/* Info */}
                 <div className="space-y-1">
+                  {product.brand_name?.trim() && (
+                    <p className="text-base font-bold text-primary">
+                      {product.brand_name}
+                    </p>
+                  )}
                   <h3 className=" font-normal text-primary">{product.name}</h3>
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-semibold text-xs">
