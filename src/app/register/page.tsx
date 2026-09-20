@@ -9,8 +9,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   ArrowRight,
   CircleStar,
-  Eye,
-  EyeOff,
   HandPlatter,
   Leaf,
   LockKeyhole,
@@ -57,8 +55,6 @@ function FieldError({ id, message }: { id: string; message?: string }) {
 export default function RegisterPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [registerError, setRegisterError] = useState("");
 
   const form = useForm({
@@ -67,26 +63,24 @@ export default function RegisterPage() {
       firstName: "",
       lastName: "",
       email: "",
-      password: "",
-      confirmPassword: "",
     },
   });
   const { errors } = form.formState;
-  const password = form.watch("password");
-  const strength = !password
-    ? 0
-    : password.length < 8
-      ? 1
-      : 2 +
-        Number(/[A-Z]/.test(password) && /[a-z]/.test(password)) +
-        Number(/\d/.test(password) && /[^a-zA-Z0-9]/.test(password));
-  const strengthLabels = ["", "Weak", "Fair", "Good", "Strong"];
 
   const formSubmit = async (payload: z.infer<typeof signupSchema>) => {
     setLoading(true);
     setRegisterError("");
     try {
       const res = await postRegister(payload);
+      if (
+        ["EMAIL_NOT_VERIFIED", "ACCOUNT_NOT_ACTIVATED"].includes(
+          res?.errors?.code,
+        )
+      ) {
+        sessionStorage.setItem("pendingVerificationEmail", payload.email);
+        router.push(`/verify-email?email=${encodeURIComponent(payload.email)}`);
+        return;
+      }
       if (!res?.data?.user_id) {
         const message = Array.isArray(res?.message)
           ? res.message.join(". ")
@@ -96,7 +90,8 @@ export default function RegisterPage() {
         );
         return;
       }
-      router.push("/login");
+      sessionStorage.setItem("pendingVerificationEmail", payload.email);
+      router.push(`/verify-email?email=${encodeURIComponent(payload.email)}`);
     } catch {
       setRegisterError(
         "Unable to create your account right now. Please try again.",
@@ -147,8 +142,8 @@ export default function RegisterPage() {
             Create Account
           </h1>
           <p className="mt-4 text-sm leading-[1.65] text-[#393939]">
-            Join the Storewell collective for private collection previews,
-            complimentary carbon-neutral shipping, and seamless checkout.
+            Join the Storewell collective. We&apos;ll email you a secure link to
+            verify your address and create your password.
           </p>
 
           <div className="mt-9 grid grid-cols-2 gap-3">
@@ -276,101 +271,6 @@ export default function RegisterPage() {
               </div>
               <FieldError id="email-error" message={errors.email?.message} />
             </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between gap-2">
-                <Label htmlFor="password" className={labelClassName}>
-                  PASSWORD<span className="text-red-700">*</span>
-                </Label>
-                <span
-                  id="password-hint"
-                  className="text-[9px] font-semibold tracking-wide text-[#454545]"
-                >
-                  MINIMUM 8 CHARACTERS
-                </span>
-              </div>
-              <div className="relative">
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  autoComplete="new-password"
-                  placeholder="Create password"
-                  className={`${inputClassName} pr-12`}
-                  required
-                  aria-invalid={!!errors.password}
-                  aria-describedby={`password-hint${errors.password ? " password-error" : ""}`}
-                  {...form.register("password")}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                  aria-pressed={showPassword}
-                  className="absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-sm text-[#777] hover:text-black focus-visible:outline-2 focus-visible:outline-black"
-                >
-                  {showPassword ? (
-                    <EyeOff className="size-4" />
-                  ) : (
-                    <Eye className="size-4" />
-                  )}
-                </button>
-              </div>
-              <div className="flex h-1 gap-1 pt-1" aria-hidden="true">
-                {[1, 2, 3, 4].map((segment) => (
-                  <span
-                    key={segment}
-                    className={`h-1 flex-1 rounded-full ${segment <= strength ? (strength < 3 ? "bg-[#a58b69]" : "bg-[#5d735c]") : "bg-[#e3e1e1]"}`}
-                  />
-                ))}
-              </div>
-              <p className="sr-only" role="status">
-                {password && `Password strength: ${strengthLabels[strength]}`}
-              </p>
-              <FieldError
-                id="password-error"
-                message={errors.password?.message}
-              />
-            </div>
-            <div className="space-y-2 pt-1">
-              <Label htmlFor="confirmPassword" className={labelClassName}>
-                CONFIRM PASSWORD<span className="text-red-700">*</span>
-              </Label>
-              <div className="relative">
-                <Input
-                  id="confirmPassword"
-                  type={showConfirmPassword ? "text" : "password"}
-                  autoComplete="new-password"
-                  placeholder="Re-enter password"
-                  className={`${inputClassName} pr-12`}
-                  required
-                  aria-invalid={!!errors.confirmPassword}
-                  aria-describedby={
-                    errors.confirmPassword ? "confirmPassword-error" : undefined
-                  }
-                  {...form.register("confirmPassword")}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  aria-label={
-                    showConfirmPassword
-                      ? "Hide confirmation password"
-                      : "Show confirmation password"
-                  }
-                  aria-pressed={showConfirmPassword}
-                  className="absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-sm text-[#777] hover:text-black focus-visible:outline-2 focus-visible:outline-black"
-                >
-                  {showConfirmPassword ? (
-                    <EyeOff className="size-4" />
-                  ) : (
-                    <Eye className="size-4" />
-                  )}
-                </button>
-              </div>
-              <FieldError
-                id="confirmPassword-error"
-                message={errors.confirmPassword?.message}
-              />
-            </div>
             <div className="space-y-3 pt-2 text-sm leading-[1.4] text-[#393939]">
               <label className="flex cursor-pointer items-start gap-3">
                 <input
@@ -417,7 +317,7 @@ export default function RegisterPage() {
               disabled={loading}
               className="mt-3 h-11 w-full gap-3 rounded-lg bg-black text-[10px] font-semibold tracking-wider text-white shadow-md shadow-black/10 hover:bg-[#242424] focus-visible:ring-black/20"
             >
-              {loading ? "CREATING ACCOUNT..." : "CREATE ACCOUNT"}
+              {loading ? "SENDING VERIFICATION..." : "CREATE ACCOUNT"}
               <ArrowRight className="size-3.5" aria-hidden="true" />
             </Button>
           </form>

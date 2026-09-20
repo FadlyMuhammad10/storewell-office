@@ -8,7 +8,11 @@ import { usePathname } from "next/navigation";
 
 export default function SiteShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isAccountPage = pathname === "/login" || pathname === "/register";
+  const isAccountPage =
+    pathname === "/login" ||
+    pathname === "/register" ||
+    pathname === "/verify-email" ||
+    pathname === "/activate-account";
 
   if (isAccountPage) {
     return (

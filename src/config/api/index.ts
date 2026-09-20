@@ -21,6 +21,19 @@ function addRefreshSubscriber(callback: (token: string) => void) {
   refreshSubscribers.push(callback);
 }
 
+function isPublicAuthRequest(url?: string) {
+  if (!url) return false;
+
+  return [
+    "/signin",
+    "/signup",
+    "/verify-email",
+    "/resend-verification",
+    "/activate-account",
+    "/refresh-token",
+  ].some((endpoint) => url.split("?")[0].endsWith(endpoint));
+}
+
 // --- Buat instance axios ---
 const instance = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API, // contoh: http://localhost:3000/api
@@ -47,7 +60,11 @@ instance.interceptors.response.use(
     const originalRequest = error.config;
 
     // Jika token expired dan belum dicoba refresh
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retry &&
+      !isPublicAuthRequest(originalRequest.url)
+    ) {
       originalRequest._retry = true;
 
       // Kalau sedang refresh token → tunggu dulu

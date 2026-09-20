@@ -35,6 +35,15 @@ export default function LoginPage() {
     setLoginError("");
     try {
       const res = await postLogin(data);
+      if (
+        ["EMAIL_NOT_VERIFIED", "ACCOUNT_NOT_ACTIVATED"].includes(
+          res?.errors?.code,
+        )
+      ) {
+        sessionStorage.setItem("pendingVerificationEmail", data.email);
+        router.push(`/verify-email?email=${encodeURIComponent(data.email)}`);
+        return;
+      }
       if (!res?.data?.token) {
         setLoginError(
           res?.message ||

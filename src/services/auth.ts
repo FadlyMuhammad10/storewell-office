@@ -1,5 +1,9 @@
 import CallAPI from "@/config/api";
-import { signinSchema, signupSchema } from "@/lib/schema";
+import {
+  activateAccountSchema,
+  signinSchema,
+  signupSchema,
+} from "@/lib/schema";
 import z from "zod";
 
 export async function postLogin(data: z.infer<typeof signinSchema>) {
@@ -18,4 +22,25 @@ export async function postLogout(refreshToken: string) {
   const url = `/logout`;
 
   return CallAPI({ url, method: "POST", data: { refreshToken } });
+}
+
+export async function verifyEmail(token: string) {
+  const url = `/verify-email`;
+
+  return CallAPI({ url, method: "GET", params: { token } });
+}
+
+export async function resendVerifyEmail(email: string) {
+  const url = `/resend-verification`;
+
+  return CallAPI({ url, method: "POST", data: { email } });
+}
+
+export async function activateAccount(
+  token: string,
+  data: z.infer<typeof activateAccountSchema>,
+) {
+  const url = `/activate-account`;
+
+  return CallAPI({ url, method: "POST", data: { token, ...data } });
 }
