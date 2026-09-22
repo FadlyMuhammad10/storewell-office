@@ -27,6 +27,7 @@ function isPublicAuthRequest(url?: string) {
   return [
     "/signin",
     "/signup",
+    "/auth/google",
     "/verify-email",
     "/resend-verification",
     "/activate-account",

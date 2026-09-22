@@ -12,6 +12,12 @@ export async function postLogin(data: z.infer<typeof signinSchema>) {
   return CallAPI({ url, method: "POST", data });
 }
 
+export async function postGoogleLogin(idToken: string) {
+  const url = `/auth/google`;
+
+  return CallAPI({ url, method: "POST", data: { id_token: idToken } });
+}
+
 export async function postRegister(data: z.infer<typeof signupSchema>) {
   const url = `/signup`;
 
