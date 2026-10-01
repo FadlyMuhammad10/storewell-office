@@ -25,8 +25,9 @@ import {
   X,
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import type { FormEvent } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 function getCategoryList(response: unknown): CategoryTree[] {
@@ -99,6 +100,7 @@ function CategoryChildren({
 export default function Navbar() {
   const dispatch = useDispatch();
   const pathname = usePathname();
+  const router = useRouter();
   const login = useSelector((state: RootState) => state.auth.isLogin);
   const token = useSelector((state: RootState) => state.auth.token);
   const cartCount = useSelector((state: RootState) => state.cart.count);
@@ -109,6 +111,8 @@ export default function Navbar() {
   const [categories, setCategories] = useState<CategoryTree[]>([]);
   const [activeCategoryId, setActiveCategoryId] = useState<number | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const closeCategoryMenus = useCallback(() => {
     setActiveCategoryId(null);
@@ -132,7 +136,23 @@ export default function Navbar() {
 
   useEffect(() => {
     closeCategoryMenus();
+    setSearchOpen(false);
   }, [pathname, closeCategoryMenus]);
+
+  const handleSearch = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const query = searchQuery.trim();
+    router.push(
+      query ? `/products?search=${encodeURIComponent(query)}` : "/products",
+    );
+    setSearchOpen(false);
+  };
+
+  const toggleSearch = () => {
+    setMobileMenuOpen(false);
+    setActiveCategoryId(null);
+    setSearchOpen((open) => !open);
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -246,9 +266,20 @@ export default function Navbar() {
         </div>
 
         <div className="flex items-center gap-4 sm:gap-5">
-          <div className="relative">
-            <Search className="h-4 w-4 text-primary" />
-          </div>
+          <button
+            type="button"
+            aria-label={searchOpen ? "Close product search" : "Search products"}
+            aria-expanded={searchOpen}
+            aria-controls="navbar-product-search"
+            onClick={toggleSearch}
+            className="grid size-9 place-items-center rounded-md text-primary transition-colors hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          >
+            {searchOpen ? (
+              <X className="h-4 w-4" />
+            ) : (
+              <Search className="h-4 w-4" />
+            )}
+          </button>
           {login ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -305,7 +336,10 @@ export default function Navbar() {
             type="button"
             aria-label={mobileMenuOpen ? "Close navigation" : "Open navigation"}
             aria-expanded={mobileMenuOpen}
-            onClick={() => setMobileMenuOpen((open) => !open)}
+            onClick={() => {
+              setSearchOpen(false);
+              setMobileMenuOpen((open) => !open);
+            }}
             className="md:hidden hover:bg-primary/10"
           >
             {mobileMenuOpen ? (
@@ -316,6 +350,42 @@ export default function Navbar() {
           </Button>
         </div>
       </div>
+
+      {searchOpen && (
+        <div
+          id="navbar-product-search"
+          className="absolute left-0 top-full w-full border-t border-black/10 bg-background shadow-lg"
+        >
+          <form
+            role="search"
+            onSubmit={handleSearch}
+            className="page-container flex items-center gap-3 py-4"
+          >
+            <Search
+              aria-hidden="true"
+              className="size-4 shrink-0 text-primary"
+            />
+            <label htmlFor="navbar-search-input" className="sr-only">
+              Search products
+            </label>
+            <input
+              id="navbar-search-input"
+              type="search"
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder="Search products..."
+              autoFocus
+              className="h-10 min-w-0 flex-1 bg-transparent text-sm text-primary-foreground outline-none placeholder:text-muted-foreground"
+            />
+            <button
+              type="submit"
+              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary/90"
+            >
+              Search
+            </button>
+          </form>
+        </div>
+      )}
 
       {activeCategory && activeCategory.children?.length > 0 && (
         <div
