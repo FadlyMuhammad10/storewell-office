@@ -2,6 +2,7 @@
 
 import Footer from "@/components/layouts/Footer";
 import Navbar from "@/components/layouts/Navbar";
+import ChatWidget from "@/components/organisms/ChatWidget";
 import { UserRound } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -82,6 +83,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
     <>
       <Navbar />
       <main className="bg-background">{children}</main>
+      <ChatWidget />
       <div className="bg-[#EFEDED]">
         <Footer />
         <div className="w-full border-t border-[#C4C7C7]" />
